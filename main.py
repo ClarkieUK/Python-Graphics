@@ -1,32 +1,43 @@
 # imports
+
+# display
 import glfw 
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
-import pyrr
-from PIL import Image
-import numpy as np
-from shader import Shader
-from sphere import Sphere
 import glm
 import imgui
 from imgui.integrations.glfw import * 
+from shader import Shader
+from sphere import Sphere
 from texture_loader import texture_load
+
+# numeracy
+import pyrr
+from PIL import Image
+import numpy as np
+
+# abstractions
 from camera import Camera
+
+# models 
 
 # display
 width,height = 1200,1200
 
 # delta_time
 last_frame = 0.0
+anchor_time = 0.0
+frame_count = 0
 
 # camera
 main_camera = Camera()
 first_mouse = True
 
+# callbacks
 def process_input(window,delta_time) :
 
     if (glfw.get_key(window, glfw.KEY_ESCAPE) == glfw.PRESS) : #we check to see if the escape is pressed in the context of the
-                                            #window, if true then we flag the closing of glfw window
+                                                                #window, if true then we flag the closing of glfw window
         glfw.set_window_should_close(window,True)			    # GetKey returns either GLFW_RELEASE or glfw.PRESS
 
     #cameraSpeed = float(5.0 * delta_time)
@@ -47,8 +58,6 @@ def process_input(window,delta_time) :
     if (glfw.get_key(window, glfw.KEY_LEFT_SHIFT) == glfw.RELEASE) :
         main_camera.processKeyboardSpeed('SLOW_DOWN', delta_time)
   
- 
-
 def window_resize(window, width, height) :
     glViewport(0, 0, width, height)
     projection = pyrr.matrix44.create_perspective_projection_matrix(45, width/height, 0.1, 100)
@@ -97,11 +106,9 @@ glfw.set_scroll_callback(window,scroll_callback)
 glfw.make_context_current(window)
 glfw.set_input_mode(window, glfw.CURSOR, glfw.CURSOR_DISABLED)
 
-sphere_shader = Shader('test.vs','square_shader.fs')
+sphere_shader = Shader('test.vs','test.fs')
 
-# actions
 sphere = Sphere(2.5,40)
-
 
 translation = pyrr.matrix44.create_from_translation(pyrr.Vector3([0.0, 0.0, 0.0]))
 
@@ -119,6 +126,13 @@ while not glfw.window_should_close(window) :
     current_frame = glfw.get_time()
     delta_time = current_frame - last_frame
     last_frame = current_frame
+    frame_count += 1
+    
+    if current_frame - anchor_time >= 1.0 :
+        print(frame_count)
+        frame_count = 0
+        anchor_time = current_frame
+        
     
     # key presses
     process_input(window,delta_time)
@@ -128,7 +142,7 @@ while not glfw.window_should_close(window) :
         
     # update view and projection matrices from camera manipulation
     view = main_camera.getViewMatrix()
-    projection = pyrr.matrix44.create_perspective_projection(main_camera.Zoom, width/height, 0.1,1000.0)
+    projection = glm.perspective(glm.radians(main_camera.Zoom), width/height, 0.1,1000.0)
     
     # set uniforms
     sphere_shader.setMat4('view',view)

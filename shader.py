@@ -5,6 +5,7 @@ from OpenGL.GL.shaders import compileProgram, compileShader
 import pyrr
 from PIL import *
 import numpy as np
+import glm
 
 class Shader :
     def __init__ (self, vertexPath : str, fragmentPath : str) :
@@ -52,4 +53,4 @@ class Shader :
                                   glGetUniformLocation(self.ID,uniform_name),
                                   1,
                                   GL_FALSE,
-                                  value)
+                                  glm.value_ptr(value))

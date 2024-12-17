@@ -88,7 +88,10 @@ class Sphere:
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * 4, ctypes.c_void_p(0))  # Position
 
         glEnableVertexAttribArray(1)
-        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * 4, ctypes.c_void_p(5 * 3))  # Normals
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * 4, ctypes.c_void_p(4 * 3))  # Texture
+        
+        glEnableVertexAttribArray(2)
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * 4, ctypes.c_void_p(4 * 5))  # Normals
 
         # Unbind VAO and buffers
         glBindVertexArray(0)
@@ -105,12 +108,12 @@ class Sphere:
         model = glm.rotate(model,glm.radians(90.0),glm.vec3(1.0, 0.0, 0.0))
         model = glm.rotate(model, glm.radians(time) * 15, glm.vec3(0.0, 0.0, 1.0))
         
-        shader.setMat4('model',glm.value_ptr(model))
+        shader.setMat4('model',model)
         
         # bind vao containing information
         glBindVertexArray(self.VAO)
         
-        glDrawElements(GL_LINE_STRIP, len(self.indices), GL_UNSIGNED_INT, ctypes.c_void_p(0))
+        glDrawElements(GL_TRIANGLE_STRIP, len(self.indices), GL_UNSIGNED_INT, ctypes.c_void_p(0))
         
         # sanitize vao
         glBindVertexArray(0)

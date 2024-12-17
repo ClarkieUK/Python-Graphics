@@ -54,7 +54,8 @@ class Camera() :
         self.Up = glm.normalize(glm.cross(self.Right, self.Front))
     
     def getViewMatrix(self) :
-        return pyrr.matrix44.create_look_at(self.Position, self.Position + self.Front, self.Up) # eye pos, target, up vector
+         # eye pos, target, up vector
+        return glm.lookAt(self.Position,self.Position + self.Front, self.Up)
     
     def processKeyboard(self, state : Camera_Movement, delta_time : float) : # movement
         
