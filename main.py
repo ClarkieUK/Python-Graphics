@@ -11,53 +11,68 @@ import glm
 import imgui
 from imgui.integrations.glfw import * 
 from texture_loader import texture_load
+from camera import Camera
 
-width,height = 800,800
+# display
+width,height = 1200,1200
+
+# delta_time
+last_frame = 0.0
+
+# camera
+main_camera = Camera()
+first_mouse = True
+
+def process_input(window,delta_time) :
+
+    if (glfw.get_key(window, glfw.KEY_ESCAPE) == glfw.PRESS) : #we check to see if the escape is pressed in the context of the
+                                            #window, if true then we flag the closing of glfw window
+        glfw.set_window_should_close(window,True)			    # GetKey returns either GLFW_RELEASE or glfw.PRESS
+
+    #cameraSpeed = float(5.0 * delta_time)
+    if glfw.get_key(window, glfw.KEY_W) == glfw.PRESS :
+        main_camera.processKeyboard('FORWARD', delta_time)
+    if (glfw.get_key(window, glfw.KEY_S) == glfw.PRESS) :
+        main_camera.processKeyboard('BACKWARD', delta_time)
+    if (glfw.get_key(window, glfw.KEY_A) == glfw.PRESS) :
+        main_camera.processKeyboard('LEFT', delta_time)
+    if (glfw.get_key(window, glfw.KEY_D) == glfw.PRESS) :
+        main_camera.processKeyboard('RIGHT', delta_time) 
+    if (glfw.get_key(window, glfw.KEY_LEFT_CONTROL) == glfw.PRESS) :
+        main_camera.processKeyboard('DOWN', delta_time)
+    if (glfw.get_key(window, glfw.KEY_SPACE) == glfw.PRESS) :
+        main_camera.processKeyboard('UP', delta_time) 
+    if (glfw.get_key(window, glfw.KEY_LEFT_SHIFT) == glfw.PRESS) :
+        main_camera.processKeyboardSpeed('SPEED_UP', delta_time)
+    if (glfw.get_key(window, glfw.KEY_LEFT_SHIFT) == glfw.RELEASE) :
+        main_camera.processKeyboardSpeed('SLOW_DOWN', delta_time)
+  
+ 
 
 def window_resize(window, width, height) :
     glViewport(0, 0, width, height)
     projection = pyrr.matrix44.create_perspective_projection_matrix(45, width/height, 0.1, 100)
-    cube_shader.setMat4('projection',projection)
+    
+def mouse_callback(window, x_position, y_position) :
+    global first_mouse
+    global last_x_position 
+    global last_y_position
+    
+    if first_mouse :
+        last_x_position = x_position 
+        last_y_position = y_position
+        first_mouse = False
  
-# geometries
+    xoffset = float(x_position - last_x_position)
+    yoffset = float(last_y_position - y_position)
+    last_x_position = float(x_position)
+    last_y_position = float(y_position)
+    
+    main_camera.processMouseMovement(xoffset,yoffset,True)
 
-vertices = np.array([-0.5, -0.5,  0.5, 0.0, 0.0,
-             0.5, -0.5,  0.5, 1.0, 0.0,
-             0.5,  0.5,  0.5, 1.0, 1.0,
-            -0.5,  0.5,  0.5, 0.0, 1.0,
-
-            -0.5, -0.5, -0.5, 0.0, 0.0,
-             0.5, -0.5, -0.5, 1.0, 0.0,
-             0.5,  0.5, -0.5, 1.0, 1.0,
-            -0.5,  0.5, -0.5, 0.0, 1.0,
-
-             0.5, -0.5, -0.5, 0.0, 0.0,
-             0.5,  0.5, -0.5, 1.0, 0.0,
-             0.5,  0.5,  0.5, 1.0, 1.0,
-             0.5, -0.5,  0.5, 0.0, 1.0,
-
-            -0.5,  0.5, -0.5, 0.0, 0.0,
-            -0.5, -0.5, -0.5, 1.0, 0.0,
-            -0.5, -0.5,  0.5, 1.0, 1.0,
-            -0.5,  0.5,  0.5, 0.0, 1.0,
-
-            -0.5, -0.5, -0.5, 0.0, 0.0,
-             0.5, -0.5, -0.5, 1.0, 0.0,
-             0.5, -0.5,  0.5, 1.0, 1.0,
-            -0.5, -0.5,  0.5, 0.0, 1.0,
-
-             0.5, 0.5, -0.5, 0.0, 0.0,
-            -0.5, 0.5, -0.5, 1.0, 0.0,
-            -0.5, 0.5,  0.5, 1.0, 1.0,
-             0.5, 0.5,  0.5, 0.0, 1.0],dtype=np.float32)
-
-indices = np.array([ 0,  1,  2,  2,  3,  0,
-            4,  5,  6,  6,  7,  4,
-            8,  9, 10, 10, 11,  8,
-           12, 13, 14, 14, 15, 12,
-           16, 17, 18, 18, 19, 16,
-           20, 21, 22, 22, 23, 20],dtype=np.uint32)
-
+def scroll_callback(window,xoffset,yoffset) :
+    main_camera.processMouseScroll(yoffset)
+ 
 # initialise glfw
 if not glfw.init() :
     raise Exception('glfw library not found...')
@@ -73,52 +88,24 @@ if not window :
 # set window position
 glfw.set_window_pos(window, 500, 300)
 glfw.set_window_size_callback(window,window_resize)
+glfw.set_cursor_pos_callback(window,mouse_callback)
+glfw.set_scroll_callback(window,scroll_callback)
 
 # set programs focus on window, all commands called after this 
 # effect only this window
 
 glfw.make_context_current(window)
+glfw.set_input_mode(window, glfw.CURSOR, glfw.CURSOR_DISABLED)
 
-cube_shader = Shader('square_shader.vs','square_shader.fs')
-#cube_shader = Shader('square_shader.vs','square_shader.fs')
+sphere_shader = Shader('test.vs','square_shader.fs')
 
 # actions
 sphere = Sphere(2.5,40)
 
-texture = glGenTextures(3)
-
-cube_crate_texture = texture_load('textures/crate.jpg',texture[0])
-cube_cat_texture = texture_load('textures/cat.png',texture[1])
-cube_smile_texture = texture_load('textures/smiley.png',texture[2])
-
-VBO = glGenBuffers(1)
-glBindBuffer(GL_ARRAY_BUFFER, VBO)
-glBufferData(GL_ARRAY_BUFFER, vertices.nbytes , vertices,GL_STATIC_DRAW)
-
-EBO = glGenBuffers(1)
-glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO)
-glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.nbytes, indices, GL_STATIC_DRAW)
-
-glEnableVertexAttribArray(0)
-glEnableVertexAttribArray(1)
-glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, np.dtype(np.float32).itemsize*5, ctypes.c_void_p(0))
-glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, np.dtype(np.float32).itemsize*5, ctypes.c_void_p(np.dtype(np.float32).itemsize*3))
-
-cube_shader.use()
-
-projection = pyrr.matrix44.create_perspective_projection_matrix(45, width/height, 0.1, 100)
 
 translation = pyrr.matrix44.create_from_translation(pyrr.Vector3([0.0, 0.0, 0.0]))
 
 scale = pyrr.matrix44.create_from_scale(pyrr.Vector3([1.5,1.5,1.5]))
-
-#view = pyrr.matrix44.create_from_translation(pyrr.Vector3([1.0, 0.0, 0.0]))
-view = pyrr.matrix44.create_look_at(
-    pyrr.Vector3([-5.0, -0.0, -5.0]), pyrr.Vector3([0.0, 0.0, 0.0]), pyrr.Vector3([0.0, 1.0, 0.0])
-) # eye pos, target, up vector
-
-cube_shader.setMat4('projection',projection)
-cube_shader.setMat4('view',view)
 
 glEnable(GL_DEPTH_TEST)
 glEnable(GL_BLEND)
@@ -128,23 +115,29 @@ glClearColor(0,0.1,0.1,1)
 
 while not glfw.window_should_close(window) :
     
-    # event handling
-    glfw.poll_events()
-
+    # delta time
+    current_frame = glfw.get_time()
+    delta_time = current_frame - last_frame
+    last_frame = current_frame
+    
+    # key presses
+    process_input(window,delta_time)
+    
+    # begin drawing
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         
-    rot_x = pyrr.Matrix44.from_x_rotation(0.5 * glfw.get_time())
-    rot_y = pyrr.Matrix44.from_y_rotation(0.8 * glfw.get_time())
-
-    rotation = pyrr.matrix44.multiply(rot_x,rot_y)
-    model   = pyrr.matrix44.multiply(scale, rotation)
-    model   = pyrr.matrix44.multiply(scale, translation)
-
-    cube_shader.setMat4('model',model)
+    # update view and projection matrices from camera manipulation
+    view = main_camera.getViewMatrix()
+    projection = pyrr.matrix44.create_perspective_projection(main_camera.Zoom, width/height, 0.1,1000.0)
     
-    glDrawElements(GL_TRIANGLES, len(indices), GL_UNSIGNED_INT, ctypes.c_void_p(0))
+    # set uniforms
+    sphere_shader.setMat4('view',view)
+    sphere_shader.setMat4('projection',projection)
+
+    sphere.draw(sphere_shader)
     
     # swap back and front pages
+    glfw.poll_events()
     glfw.swap_buffers(window)
 
 # free resources
