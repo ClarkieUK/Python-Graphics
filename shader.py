@@ -46,6 +46,12 @@ class Shader :
         glProgramUniform1f(self.ID,
                            glGetUniformLocation(self.ID , uniform_name),
                            float(value))
+        
+    def setVec2(self, uniform_name : str, value : glm.vec2) :
+
+        glProgramUniform2f(self.ID,
+                           glGetUniformLocation(self.ID , uniform_name),
+                           value[0],value[1])
     
     def setMat4(self,uniform_name : str, value) :
         

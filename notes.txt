@@ -1,0 +1,13 @@
+# to load texture 
+texture = glGenTextures(3) <- define how many we will load
+
+saturn_tex = texture_load('8k_saturn.jpg',texture[0]) # load texture into slot
+
+then
+
+glBindTexture(GL_TEXTURE_2D,saturn_tex) # active when needed
+
+#########################
+
+
+z is out of the screen, x is right, and y is up.

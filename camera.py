@@ -16,31 +16,28 @@ class Camera_State :
     
 class Camera() : 
     
-    YAW = -90.0
+    YAW = 0.0
     PITCH = 0.0
     SPEED = 5.0
     SENSITIVITY = 0.1
     ZOOM = 45.0
     
-    def __init__(self, Position = glm.vec3(0.0,0.0,15.0),WorldUp = glm.vec3(0.0,1.0,0.0)) : # vectors
-        #     camera(glm.vec3 position = glm.vec3(0.0f, 0.0f, 15.0f), 
-        # glm.vec3 up = glm.vec3(0.0f, 1.0f, 0.0f), 
-        # float yaw = YAW, float pitch = PITCH) : Front(glm.vec3(0.0f, 0.0f, -1.0f)),
-        # MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
-        # Camera Attribs
+    def __init__(self, Position = glm.vec3(0.0,0.0,0.0),WorldUp = glm.vec3(0.0,1.0,0.0)) : # vectors
+        # camera Attribs
         self.Position   = Position
         self.WorldUp    = WorldUp
         
-        # Euler Angles
+        # euler Angles
         self.Yaw    = Camera.YAW
         self.Pitch  = Camera.PITCH
         
-        # Camera Options
+        # camera Options
         self.MovementSpeed      = Camera.SPEED
         self.MouseSensitivity   = Camera.SENSITIVITY
         self.Zoom               = Camera.ZOOM
         
-        self.updateCameraVectors() # Calculated Front, Right, Up
+        # calculated front, right, up
+        self.updateCameraVectors() 
     
     def updateCameraVectors(self) :
         front = glm.vec3() 

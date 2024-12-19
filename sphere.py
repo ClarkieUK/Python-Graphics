@@ -4,8 +4,8 @@ import glm
 import glfw
 
 class Sphere:
-    def __init__(self, radius = 5.0, resolution = 10):
-        self.radius = radius
+    def __init__(self, radius = 5.0, resolution = 10, position = glm.vec3(0,0,0)):
+        self.radius = 0.3 * radius 
         self.resolution = resolution
 
         self.vertices   = []
@@ -22,16 +22,18 @@ class Sphere:
         # Generate vertices, normals, and texture coordinates
         for i in range(resolution + 1):  # stacks
             phi = np.pi / 2 - i * delta_phi
-            xy = radius * np.cos(phi)
-            z = radius * np.sin(phi)
+            #xy = radius * np.cos(phi)
+            xy = self.radius * np.cos(phi)
+            #z = radius * np.sin(phi)
+            y = self.radius * np.sin(phi)
 
             for j in range(resolution + 1):  # sectors
                 theta = j * delta_theta
                 x = xy * np.cos(theta)
-                y = xy * np.sin(theta)
+                z = xy * np.sin(theta)
 
                 # Vertex
-                self.vertices.extend([x, y, z])
+                self.vertices.extend([x, y, z]) # xyz if in right handed coord system xzy if computed in cartesian
 
                 # Normal
                 nx = x * length_inv
@@ -77,43 +79,43 @@ class Sphere:
 
         self.VBO = glGenBuffers(1)
         glBindBuffer(GL_ARRAY_BUFFER, self.VBO)
-        glBufferData(GL_ARRAY_BUFFER, np.array(self.interleaved_vertices, dtype=np.float32), GL_STATIC_DRAW)
+        glBufferData(GL_ARRAY_BUFFER, len(self.interleaved_vertices)*np.dtype(np.float32).itemsize,np.array(self.interleaved_vertices, dtype=np.float32), GL_STATIC_DRAW)
 
         self.EBO = glGenBuffers(1)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.EBO)
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, np.array(self.indices, dtype=np.uint32), GL_STATIC_DRAW)
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(self.indices)*np.dtype(np.uint32).itemsize ,np.array(self.indices, dtype=np.uint32), GL_STATIC_DRAW)
 
         # Set vertex attributes
         glEnableVertexAttribArray(0)
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * 4, ctypes.c_void_p(0))  # Position
 
         glEnableVertexAttribArray(1)
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * 4, ctypes.c_void_p(4 * 3))  # Texture
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * 4, ctypes.c_void_p(np.dtype(np.float32).itemsize * 3))  # Texture
         
         glEnableVertexAttribArray(2)
-        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * 4, ctypes.c_void_p(4 * 5))  # Normals
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * 4, ctypes.c_void_p(np.dtype(np.float32).itemsize * 5))  # Normals
 
         # Unbind VAO and buffers
         glBindVertexArray(0)
         glBindBuffer(GL_ARRAY_BUFFER, 0)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)
         
-    def draw(self,shader) :
+    def draw(self,shader, position, scale) :
         
         shader.use()
         
         time = glfw.get_time()
         
+        # and z in and out of the screen
         model = glm.mat4(1.0)
-        model = glm.rotate(model,glm.radians(90.0),glm.vec3(1.0, 0.0, 0.0))
-        model = glm.rotate(model, glm.radians(time) * 15, glm.vec3(0.0, 0.0, 1.0))
-        
+        model = glm.translate(model, glm.vec3(position[0]*scale,position[2]*scale,position[1]*scale))
+        model = glm.rotate(model, glm.radians(time) * 15, glm.vec3(0.0, 1.0, 0.0)) # potentially modify speed 
         shader.setMat4('model',model)
         
         # bind vao containing information
         glBindVertexArray(self.VAO)
-        
         glDrawElements(GL_TRIANGLE_STRIP, len(self.indices), GL_UNSIGNED_INT, ctypes.c_void_p(0))
+        #glDrawElements(GL_LINE_STRIP, len(self.indices), GL_UNSIGNED_INT, ctypes.c_void_p(0))
         
         # sanitize vao
         glBindVertexArray(0)
