@@ -16,12 +16,14 @@ class Shader :
             with open(f'shaders/'+fragmentPath) as fragmentshader : 
                 fragmentdata = fragmentshader.read()
         except : 
-            print("Could not load shaders!")
+            print("Could not load shaders! (check path)")
 
         try :
             self.ID = compileProgram(compileShader(vertexdata, GL_VERTEX_SHADER), 
                                     compileShader(fragmentdata, GL_FRAGMENT_SHADER))
         except :
+            info = str
+            glGetShaderInfoLog(self.ID,512,None,info)
             print("Could not compile shader!")
 
     # Use

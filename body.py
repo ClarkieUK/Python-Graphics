@@ -36,7 +36,8 @@ class Body() :
         
     def draw_orbit(self, shader, scale) : 
         # each planet (body), has a trail , the sphere mesh doesnt. That is why
-        # this method is located in the body class
+        # this method is located in the body class, doesn't require scale
+        # as information passed has already been scaled.
         shader.use()
         
         # generate buffer then bind and send data
@@ -63,4 +64,5 @@ class Body() :
             
         # unsure if required, cleanses the vbo. (maybe attach to each body object(?))
         glInvalidateBufferData(VBO)
+        glBindBuffer(GL_ARRAY_BUFFER, 0)
         

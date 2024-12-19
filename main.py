@@ -49,7 +49,7 @@ DIM_GRAY = np.array([16,16,16])
 ORANGE = np.array([255,165,0])
 BROWN = np.array([222,184,135])
 
-# Facts https://nssdc.gsfc.nasa.gov/planetary/planetfact.html , https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/ , https://ssd.jpl.nasa.gov/horizons/app.html#/
+# facts https://nssdc.gsfc.nasa.gov/planetary/planetfact.html , https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/ , https://ssd.jpl.nasa.gov/horizons/app.html#/
 
 G = 6.67430e-11
 AU = 1.496e11
@@ -175,6 +175,7 @@ saturn = Body(BROWN,9.45/5,
                 Vector3(4.600536590796957E+03,  8.158326300996555E+03, -3.244831811891196E+02),
                 5.683e26)
 
+# all simulated entities 
 bodies = [sun,mercury,venus,earth,mars,jupiter,saturn,uranus,neptune] 
 
 glEnable(GL_DEPTH_TEST)
@@ -186,15 +187,15 @@ glClearColor(0,0.1,0.1,1)
 while not glfw.window_should_close(window) :
     
     # delta time
-    current_frame = glfw.get_time()
-    delta_time = current_frame - last_frame
-    last_frame = current_frame
+    current_frame_time = glfw.get_time()
+    delta_time = current_frame_time - last_frame
+    last_frame = current_frame_time
     frame_count += 1
-    
-    if current_frame - anchor_time >= 1.0 :
-        print('FPS :',frame_count)
+
+    if (current_frame_time - anchor_time) >= 1.0 :
+        print('Avg. FPS :',frame_count)
         frame_count = 0
-        anchor_time = current_frame
+        anchor_time = current_frame_time
         
     # key presses
     process_input(window,delta_time)
@@ -206,14 +207,15 @@ while not glfw.window_should_close(window) :
     view = main_camera.getViewMatrix()
     projection = glm.perspective(glm.radians(main_camera.Zoom), width/height, 0.1,1500.0)
     
-    # set uniforms
+    # set uniforms (maybe make this a loop for a shader collection)
     sphere_shader.setMat4('view',view)
     orbits_shader.setMat4('view',view)
     sphere_shader.setMat4('projection',projection)
     orbits_shader.setMat4('projection',projection)
+    
     sphere_shader.setFloat('iTime',glfw.get_time())
 
-
+    # -------------------------------------------------------- SIM -------------------------------------------------------- #
     update_bodies_rungekutta(bodies,delta_time)
     
     for body in bodies :
