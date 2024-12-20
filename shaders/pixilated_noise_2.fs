@@ -2,17 +2,15 @@
 #ifdef GL_ES
 #endif
 
-
 in vec3 Norm;
 in vec2 TexCoord;
 in vec4 TruePosition;
 
 uniform sampler2D iTexture;
 uniform float iTime;
+uniform float pixelSize; // Control pixelation
 
 out vec4 gl_FragColor;  
-
-
 // perlin required functional stuff
 vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x, 289.0);}
 vec4 taylorInvSqrt(vec4 r){return 1.79284291400159 - 0.85373472095314 * r;}
@@ -152,68 +150,48 @@ float cnoise(vec4 P){
   return 2.2 * n_xyzw;
 }
 
-vec3 colorPalette(float value)
-{
-    // Define four colors: Blue, Green, Yellow, and Red
-    vec3 color1 = vec3(0.553, 0.702, 0.922);   
-    vec3 color2 = vec3(0.49, 0.612, 0.847);    
-    vec3 color3 = vec3(0.416, 0.506, 0.686);    
-    vec3 color4 = vec3(0.376, 0.443, 0.533);    
-
-    if (value < 0.5) {
-        // Interpolate between Blue and Green
-        return mix(color1, color2, value * 3.0);
-    } else if (value < 0.66) {
-        // Interpolate between Green and Yellow
-        return mix(color2, color3, (value - 0.33) * 3.0);
-    } else {
-        // Interpolate between Yellow and Red
-        return mix(color3, color4, (value - 0.66) * 3.0);
-    }
+vec3 colorPixelPalette(float value) {
+    if (value < 0.2) return vec3(0.573, 0.722, 0.942);  // Blue
+    else if (value < 0.4) return vec3(0.49, 0.612, 0.847);  // Green
+    else if (value < 0.6) return vec3(0.416, 0.506, 0.686);  // Yellow
+    else if (value < 0.8) return vec3(0.376, 0.443, 0.533);  // Orange
+    else return vec3(0.326, 0.393, 0.483);  // Red
 }
 
-vec3 colorPixelPalette(float value) {
-    if (value < 0.2) {
-        return vec3(0.573, 0.722, 0.942);  // Blue
-    } else if (value < 0.4) {
-        return vec3(0.49, 0.612, 0.847);  // Green
-    } else if (value < 0.6) {
-        return vec3(0.416, 0.506, 0.686);  // Yellow
-    } else if (value < 0.8) {
-        return vec3(0.376, 0.443, 0.533);  // Orange
-    } else {
-        return vec3(0.326, 0.393, 0.483);  // Red
-    }
+vec3 quantizePosition(vec3 position, float pixelSize) {
+    // Use floor function and align based on pixel size
+    return floor(position / pixelSize) * pixelSize ;
 }
 
 void main() {
-    // Parameters for controlling the noise
-    float frequency = 1.0;      // Base frequency (start frequency)
-    float persistence = 0.5;    // Amplitude decay for each octave
-    float lacunarity = 2.0;     // Frequency increase for each octave
-    int octaves = 8;            // Number of octaves to sum
+    // Quantize TruePosition based on pixelSize
+    vec3 quantizedPosition = quantizePosition(TruePosition.xyz, 0.01);
+    //vec3 quantizedPosition = TruePosition.xyz;
+    // Perlin noise parameters
+    float frequency = 1.0;
+    float persistence = 0.5;
+    float lacunarity = 2.0;
+    int octaves = 8;
 
-    float total = 0.2;
+    // Compute noise value
+    float total = 0.0;
     float amplitude = 1.0;
     float maxAmplitude = 0.0;
-    
-    // Iterate through octaves
-    for (int i = 0; i < octaves; i++) {
-        // Apply frequency and calculate noise value
-        total += cnoise(TruePosition * frequency) * amplitude; // make 5 uniform?
 
-        // Increase frequency and decrease amplitude for the next octave
+    // Sample the Perlin noise over multiple octaves
+    for (int i = 0; i < octaves; i++) {
+        total += cnoise(vec4(quantizedPosition * frequency, 1)) * amplitude;
         frequency *= lacunarity;
         amplitude *= persistence;
-
-        maxAmplitude += amplitude; // Keep track of max amplitude for normalization
+        maxAmplitude += amplitude;
     }
-    
-    // Normalize the result to [0, 1] (optional: adjust based on desired output)
-    total /= maxAmplitude;
 
+    total /= maxAmplitude; // Normalize the result to [0, 1]
+
+    // Map noise value to a color palette
     vec3 color = colorPixelPalette(total);
+
+    // Output the final color
+    gl_FragColor = vec4(color,1);
     
-    // Output the final color (can be scaled, shifted, or mapped as needed)
-    gl_FragColor = vec4(color, 1.0);
 }

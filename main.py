@@ -127,6 +127,7 @@ glfw.set_scroll_callback(window,scroll_callback)
 glfw.make_context_current(window)
 glfw.set_input_mode(window, glfw.CURSOR, glfw.CURSOR_DISABLED)
 
+# create shader programs
 sphere_shader = Shader('pixilated_noise.vs','pixilated_noise.fs')
 orbits_shader = Shader('orbit.vs','orbit.fs')
 
@@ -217,7 +218,7 @@ while not glfw.window_should_close(window) :
 
     # -------------------------------------------------------- SIM -------------------------------------------------------- #
     update_bodies_rungekutta(bodies,delta_time)
-    
+
     for body in bodies :
         body.draw(sphere_shader,scale)
         body.draw_orbit(orbits_shader,scale)
