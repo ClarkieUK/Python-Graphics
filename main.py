@@ -23,6 +23,10 @@ from shader import Shader
 from body import Body
 from vector import *
 
+# debugging
+import cProfile, pstats
+profiler = cProfile.Profile()
+
 # display
 width,height = 1200,1200
 
@@ -221,7 +225,10 @@ while not glfw.window_should_close(window) :
 
     for body in bodies :
         body.draw(sphere_shader,scale)
+        
+        #profiler.enable()
         body.draw_orbit(orbits_shader,scale)
+        #profiler.disable()
     
     # swap back and front pages
     glBindVertexArray(0)
@@ -230,3 +237,6 @@ while not glfw.window_should_close(window) :
 
 # free resources
 glfw.terminate()
+
+#stats = pstats.Stats(profiler).sort_stats('ncalls')
+#stats.print_stats()

@@ -14,7 +14,6 @@ class Body() :
         # display
         self.radius        = radius
         self.color         = color
-        self.orbit_points  = np.array([],dtype=np.float32)
         
         # physics
         self.position       = position
@@ -25,6 +24,19 @@ class Body() :
         
         # mesh
         self.mesh = Sphere(self.radius, 50, self.position)
+        
+        # orbit
+        self.max_orbit_points = 500
+        self.orbit_points = np.zeros((self.max_orbit_points, 3), dtype=np.float32)
+        self.orbit_index = 0
+        
+        # orbit buffer of fixed length 
+        self.VBO = glGenBuffers(1)
+        glBindBuffer(GL_ARRAY_BUFFER, self.VBO) 
+        glBufferData(GL_ARRAY_BUFFER, self.max_orbit_points * 3 * np.dtype(np.float32).itemsize, None, GL_DYNAMIC_DRAW)
+        glBindBuffer(GL_ARRAY_BUFFER, 0)
+        
+ 
     
     def draw(self, shader, scale) :
         # drawing the body consists of just drawing the sphere
@@ -32,37 +44,38 @@ class Body() :
         self.mesh.draw(shader,self.position,scale)
 
         # pass position to an array for drawing the trail
-        self.orbit_points = np.append(self.orbit_points,[self.position[0]*scale,self.position[2]*scale,self.position[1]*scale])
+        self.orbit_points[self.orbit_index] = [
+            self.position[0] * scale,
+            self.position[2] * scale,
+            self.position[1] * scale
+        ]
         
+        # cycle over the 500 index points in a circular fashion
+        self.orbit_index = (self.orbit_index + 1) % self.max_orbit_points
+         
     def draw_orbit(self, shader, scale) : 
         # each planet (body), has a trail , the sphere mesh doesnt. That is why
         # this method is located in the body class, doesn't require scale
         # as information passed has already been scaled.
+        
         shader.use()
         
-        # generate buffer then bind and send data
-        VBO = glGenBuffers(1)
-        glBindBuffer(GL_ARRAY_BUFFER, VBO)
-        glBufferData(GL_ARRAY_BUFFER,self.orbit_points.nbytes,self.orbit_points,GL_STATIC_DRAW)
-
-        # just have the form V : (x,y,z) , no colour or texture information
+        # bind buffer then bind and send data
+        glBindBuffer(GL_ARRAY_BUFFER, self.VBO)
+        glBufferSubData(GL_ARRAY_BUFFER, 0, self.max_orbit_points * 3 * np.dtype(np.float32).itemsize, self.orbit_points)
+        
+        # set up vertex attributes
         glEnableVertexAttribArray(0)
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 12, ctypes.c_void_p(0))
-        
-        # check if there is more than one vertice
-        if len(self.orbit_points) > 3:
             
-            # remove old orbit information
-            if len(self.orbit_points) > 1500 : 
-                self.orbit_points = np.delete(self.orbit_points,[0,1,2])
-                
-            # draw lines
-            glBegin(GL_LINES)
-            for i in range(int(len(self.orbit_points)/3)) :
-                glVertex3f(self.orbit_points[i*3+0],self.orbit_points[i*3+1],self.orbit_points[i*3+2])
-            glEnd()
+        if self.orbit_index == 0:
+            # draw all points in a single call
+            glDrawArrays(GL_LINE_STRIP, 0, self.max_orbit_points)
+        else:
+            # draw from orbit_index to the end
+            glDrawArrays(GL_LINE_STRIP, self.orbit_index, self.max_orbit_points - self.orbit_index)
+            # draw from the start to orbit_index - 1
+            glDrawArrays(GL_LINE_STRIP, 0, self.orbit_index)    
             
-        # unsure if required, cleanses the vbo. (maybe attach to each body object(?))
-        glInvalidateBufferData(VBO)
+        # unsure if required, frees the vbo.
         glBindBuffer(GL_ARRAY_BUFFER, 0)
-        
