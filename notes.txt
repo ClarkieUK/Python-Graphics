@@ -11,3 +11,10 @@ glBindTexture(GL_TEXTURE_2D,saturn_tex) # active when needed
 
 
 z is out of the screen, x is right, and y is up.
+
+
+##################
+
+python -m cProfile -o debug.dat main.py
+
+snakeviz debug.dat

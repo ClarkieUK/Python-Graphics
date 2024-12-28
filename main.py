@@ -201,6 +201,9 @@ while not glfw.window_should_close(window) :
         print('Avg. FPS :',frame_count)
         frame_count = 0
         anchor_time = current_frame_time
+    elif current_frame_time > 10.0 :
+        glfw.set_window_should_close(window,True)
+        pass
         
     # key presses
     process_input(window,delta_time)

@@ -26,9 +26,9 @@ class Body() :
         self.mesh = Sphere(self.radius, 50, self.position)
         
         # orbit
-        self.max_orbit_points = 500
-        self.orbit_points = np.zeros((self.max_orbit_points, 3), dtype=np.float32)
-        self.orbit_index = 0
+        self.max_orbit_points = 100
+        self.orbit_points     = np.full((self.max_orbit_points, 3), None, dtype=np.float32)
+        self.orbit_index      = 0
         
         # orbit buffer of fixed length 
         self.VBO = glGenBuffers(1)
@@ -52,30 +52,34 @@ class Body() :
         
         # cycle over the 500 index points in a circular fashion
         self.orbit_index = (self.orbit_index + 1) % self.max_orbit_points
-         
+        
     def draw_orbit(self, shader, scale) : 
         # each planet (body), has a trail , the sphere mesh doesnt. That is why
         # this method is located in the body class, doesn't require scale
         # as information passed has already been scaled.
         
         shader.use()
-        
         # bind buffer then bind and send data
         glBindBuffer(GL_ARRAY_BUFFER, self.VBO)
-        glBufferSubData(GL_ARRAY_BUFFER, 0, self.max_orbit_points * 3 * np.dtype(np.float32).itemsize, self.orbit_points)
         
+        # sends the trailing part of the orbit to the vbo
+        glBufferSubData(GL_ARRAY_BUFFER,
+                        0,
+                        (self.max_orbit_points - self.orbit_index) * 3 * np.dtype(np.float32).itemsize,
+                        self.orbit_points[self.orbit_index:self.max_orbit_points])
+        
+        # sends the new overwriting part of the trail to the vbo
+        glBufferSubData(GL_ARRAY_BUFFER,
+                        (self.max_orbit_points - self.orbit_index) * 3 * np.dtype(np.float32).itemsize,
+                        (self.orbit_index) * 3 * np.dtype(np.float32).itemsize,
+                        self.orbit_points[0:self.orbit_index])
+
         # set up vertex attributes
         glEnableVertexAttribArray(0)
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 12, ctypes.c_void_p(0))
-            
-        if self.orbit_index == 0:
-            # draw all points in a single call
-            glDrawArrays(GL_LINE_STRIP, 0, self.max_orbit_points)
-        else:
-            # draw from orbit_index to the end
-            glDrawArrays(GL_LINE_STRIP, self.orbit_index, self.max_orbit_points - self.orbit_index)
-            # draw from the start to orbit_index - 1
-            glDrawArrays(GL_LINE_STRIP, 0, self.orbit_index)    
-            
+
+        # draw orbit
+        glDrawArrays(GL_LINE_STRIP,0,self.max_orbit_points)
+    
         # unsure if required, frees the vbo.
         glBindBuffer(GL_ARRAY_BUFFER, 0)
