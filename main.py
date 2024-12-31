@@ -219,7 +219,6 @@ saturn = Body(
 
 # all simulated entities
 bodies_state = Bodies.from_bodies([sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune])
-bodies_t = Bodies.from_bodies([sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune])
 
 #bodies_t.bodies[0].position = Vector3(0.5*AU,0.5*AU,0.5*AU)
 
@@ -271,9 +270,8 @@ while not glfw.window_should_close(window):
     #update_bodies_rungekutta(bodies, delta_time)
     update_bodies_rungekutta_2(bodies_state, delta_time)
 
-    for body in bodies_state.bodies:
+    for body in bodies_state:
         body.draw(sphere_shader, scale)
-
         body.draw_orbit(orbits_shader, scale)
 
     # swap back and front pages

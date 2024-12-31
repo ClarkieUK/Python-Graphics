@@ -48,12 +48,11 @@ def update_bodies_rungekutta_2(bodies_state : object, delta_time : float) : # ca
     drs = 1/6 * (drs1 + 2*drs2 + 2*drs3 + drs4)
     dvs = 1/6 * (dvs1 + 2*dvs2 + 2*dvs3 + dvs4)
 
-    for i, body in enumerate(bodies_state.bodies) :
-        body.position = drs[i]
-        body.velocity = dvs[i]   
+    bodies_state.positions += drs
+    bodies_state.velocities += dvs 
     
-def reset(bodies : list[object]) :
+def reset(bodies_state : object) :
     # no use really :?
-    for body in bodies :
-        body.velocity       = 0
-        body.acceleration   = 0
+    for body in bodies_state.bodies :
+        body.velocity       = np.array([0,0,0])
+        body.acceleration   = np.array([0,0,0])

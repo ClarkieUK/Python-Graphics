@@ -7,8 +7,8 @@ from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 from shader import *
 from dataclasses import dataclass
+from collections.abc import Sequence
 
-@dataclass
 class Body:
     def __init__(self, color, radius, position, velocity, mass):
 
@@ -97,7 +97,7 @@ class Body:
         glBindBuffer(GL_ARRAY_BUFFER, 0)
 
 
-class Bodies:
+class Bodies(Sequence):
     def __init__(self, bodies : list[Body], positions: np.array, velocities: np.array, masses: np.array) -> None:
         assert positions.shape[0] == velocities.shape[0] == masses.shape[0], "mismatched array dimensions"
         self.bodies = bodies
@@ -107,8 +107,17 @@ class Bodies:
 
     @classmethod
     def from_bodies(cls, bodies: list[Body]) -> 'Bodies':
-        bodies = [body for body in bodies]
         positions = np.array([body.position for body in bodies])
         velocities = np.array([body.velocity for body in bodies])
         masses = np.array([body.mass for body in bodies])
         return cls(bodies, positions, velocities, masses)
+    
+    def __len__(self) -> int:
+        return len(self.bodies)
+
+    def __getitem__(self, key) -> Body:
+        body = self.bodies[key]
+        body.position = self.positions[key]
+        body.velocity = self.velocities[key]
+        body.mass = self.masses[key]
+        return body
