@@ -2,6 +2,10 @@ import glm
 from math import cos,sin
 import pyrr
 
+""" 
+gotta fix variable names here..
+"""
+
 class Camera_Movement :
     FORWARD = 'FORWARD'
     BACKWARD = 'BACKWARD' 

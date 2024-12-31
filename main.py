@@ -11,7 +11,6 @@ from imgui.integrations.glfw import *
 from PIL import Image
 
 # numeracy
-import pyrr
 import numpy as np
 from integrators import update_bodies_rungekutta 
 

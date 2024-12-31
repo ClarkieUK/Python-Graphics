@@ -68,9 +68,9 @@ class Sphere:
         # interleave vertices, texture coordinates, and normals
         for i in range(len(self.vertices) // 3):
             self.interleaved_vertices.extend([
-                self.vertices[3 * i], self.vertices[3 * i + 1], self.vertices[3 * i + 2],  # Vertex
-                self.tex_coords[2 * i], self.tex_coords[2 * i + 1],  # Texture coords
-                self.normals[3 * i], self.normals[3 * i + 1], self.normals[3 * i + 2]  # Normals
+                self.vertices[3 * i], self.vertices[3 * i + 1], self.vertices[3 * i + 2],  # vertex
+                self.tex_coords[2 * i], self.tex_coords[2 * i + 1],  # texture coords
+                self.normals[3 * i], self.normals[3 * i + 1], self.normals[3 * i + 2]  # normals
             ])
 
         # openGL buffers
@@ -87,13 +87,13 @@ class Sphere:
 
         # set vertex attributes
         glEnableVertexAttribArray(0)
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * 4, ctypes.c_void_p(0))  # Position
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * 4, ctypes.c_void_p(0))  # position
 
         glEnableVertexAttribArray(1)
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * 4, ctypes.c_void_p(np.dtype(np.float32).itemsize * 3))  # Texture
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * 4, ctypes.c_void_p(np.dtype(np.float32).itemsize * 3))  # texture
         
         glEnableVertexAttribArray(2)
-        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * 4, ctypes.c_void_p(np.dtype(np.float32).itemsize * 5))  # Normals
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * 4, ctypes.c_void_p(np.dtype(np.float32).itemsize * 5))  # normals
 
         # unbind VAO and buffers
         glBindVertexArray(0)

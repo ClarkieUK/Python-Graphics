@@ -13,6 +13,7 @@ def texture_load(path: str, texture):
     image = Image.open("textures/" + path)
     image = image.transpose(Image.FLIP_TOP_BOTTOM)
     img_data = image.convert("RGBA").tobytes()
+    
     glTexImage2D(
         GL_TEXTURE_2D,
         0,
@@ -24,4 +25,5 @@ def texture_load(path: str, texture):
         GL_UNSIGNED_BYTE,
         img_data,
     )
+    
     return texture

@@ -2,7 +2,7 @@ import math
 import numpy as np
 from scipy.constants import G
 
-# vector shit
+# vector shit (mostly redundant)
 def magnitude(a : list) -> list :
     return math.sqrt(a[0]**2+a[1]**2+a[2]**2)
 
@@ -41,7 +41,7 @@ def acceleration(a , b , m_b) :
     p = position_vector(a,b)
     return ((G * m_b)/(magnitude(p))**3) * p 
 
-# list shit
+# list shit 
 def list_add(a : list, scalar : float) :
     return [a_i + scalar for a_i in a]
 

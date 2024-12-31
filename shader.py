@@ -9,7 +9,7 @@ import glm
 
 class Shader :
     def __init__ (self, vertexPath : str, fragmentPath : str) :
-    # Create Shader 
+    # create shader 
         try : 
             with open(f'shaders/'+vertexPath) as vertexshader : 
                 vertexdata = vertexshader.read()
@@ -26,11 +26,11 @@ class Shader :
             glGetShaderInfoLog(self.ID,512,None,info)
             print("Could not compile shader!")
 
-    # Use
+    # use
     def use(self) :
         glUseProgram(self.ID)
     
-    # Uniform Handling
+    # uniform Handling
     def setBool(self, uniform_name : str, value : bool) :
 
         glProgramUniform1i(self.ID,
