@@ -7,7 +7,7 @@ from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 from shader import *
 from dataclasses import dataclass
-from collections.abc import Sequence
+from collections.abc import MutableSequence
 
 class Body:
     def __init__(self, color, radius, position, velocity, mass):
@@ -97,7 +97,7 @@ class Body:
         glBindBuffer(GL_ARRAY_BUFFER, 0)
 
 
-class Bodies(Sequence):
+class Bodies(MutableSequence):
     def __init__(self, bodies : list[Body], positions: np.array, velocities: np.array, masses: np.array) -> None:
         assert positions.shape[0] == velocities.shape[0] == masses.shape[0], "mismatched array dimensions"
         self.bodies = bodies
@@ -114,10 +114,22 @@ class Bodies(Sequence):
     
     def __len__(self) -> int:
         return len(self.bodies)
-
+    
     def __getitem__(self, key) -> Body:
         body = self.bodies[key]
         body.position = self.positions[key]
         body.velocity = self.velocities[key]
         body.mass = self.masses[key]
         return body
+    
+    def __delitem__(self) :
+        pass
+    
+    def __setitem__(self, key, body) -> None:
+        self.bodies[key] = body
+        self.positions[key] = body.position
+        self.velocities[key] = body.velocity
+        self.masses[key] = body.mass
+    
+    def insert(self) :
+        pass

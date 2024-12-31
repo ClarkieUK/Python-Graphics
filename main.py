@@ -8,19 +8,19 @@ from OpenGL.GL.shaders import compileProgram, compileShader
 import glm
 import imgui
 from imgui.integrations.glfw import *
-from sphere import Sphere
+from PIL import Image
 
 # numeracy
 import pyrr
-from PIL import Image
 import numpy as np
-from integrators import update_bodies_rungekutta , update_bodies_rungekutta_2
+from integrators import update_bodies_rungekutta 
 
 # abstractions
 from camera import Camera
 from texture_loader import texture_load
 from shader import Shader
 from body import Body , Bodies
+from sphere import Sphere
 from vector import *
 
 # debugging
@@ -220,9 +220,6 @@ saturn = Body(
 # all simulated entities
 bodies_state = Bodies.from_bodies([sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune])
 
-#bodies_t.bodies[0].position = Vector3(0.5*AU,0.5*AU,0.5*AU)
-
-
 glEnable(GL_DEPTH_TEST)
 glEnable(GL_BLEND)
 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
@@ -267,9 +264,7 @@ while not glfw.window_should_close(window):
     sphere_shader.setFloat("iTime", glfw.get_time())
 
     # -------------------------------------------------------- SIM -------------------------------------------------------- #
-    #update_bodies_rungekutta(bodies, delta_time)
-    update_bodies_rungekutta_2(bodies_state, delta_time)
-
+    update_bodies_rungekutta(bodies_state, delta_time)
     for body in bodies_state:
         body.draw(sphere_shader, scale)
         body.draw_orbit(orbits_shader, scale)
