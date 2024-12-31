@@ -14,13 +14,13 @@ from sphere import Sphere
 import pyrr
 from PIL import Image
 import numpy as np
-from integrators import update_bodies_rungekutta
+from integrators import update_bodies_rungekutta , update_bodies_rungekutta_2
 
 # abstractions
 from camera import Camera
 from texture_loader import texture_load
 from shader import Shader
-from body import Body
+from body import Body , Bodies
 from vector import *
 
 # debugging
@@ -148,77 +148,81 @@ orbits_shader = Shader("orbit.vs", "orbit.fs")
 sun = Body(
     YELLOW,
     2,
-    Vector3(-8.974133574359094e-03, -4.482427452346882e-04, 2.127030817970091e-04) * AU,
-    Vector3(2.943740906566515e-00, -1.522269030106718e01, 5.405294312927581e-02),
+    np.array([-8.974133574359094e-03, -4.482427452346882e-04, 2.127030817970091e-04]) * AU,
+    np.array([2.943740906566515e-00, -1.522269030106718e01, 5.405294312927581e-02]),
     1.98892e30,
 )
 
 earth = Body(
     LIGHT_BLUE,
     1,
-    Vector3(-9.505921700191389e-01, 3.087952119351821e-01, 1.989011142050173e-04) * AU,
-    Vector3(-9.765270895434471e03, -2.842566374064967e04, 1.340272026562062e-00),
+    np.array([-9.505921700191389e-01, 3.087952119351821e-01, 1.989011142050173e-04]) * AU,
+    np.array([-9.765270895434471e03, -2.842566374064967e04, 1.340272026562062e-00]),
     5.9742e24,
 )
 
 mercury = Body(
     GRAY,
     0.383,
-    Vector3(2.149048126431211e-01, -3.703275102221233e-01, -5.054911078568054e-02) * AU,
-    Vector3(3.194733455939798e04, 2.760819992651870e04, -6.726501719165086e02),
+    np.array([2.149048126431211e-01, -3.703275102221233e-01, -5.054911078568054e-02]) * AU,
+    np.array([3.194733455939798e04, 2.760819992651870e04, -6.726501719165086e02]),
     3.3e23,
 )
 
 jupiter = Body(
     BROWN,
     11.21 / 5,
-    Vector3(4.704772918851717e00, 1.511365399792853e00, -1.115289067637071e-01) * AU,
-    Vector3(-4.142495775785003e03, 1.305304733174904e04, 3.854785819752404e01),
+    np.array([4.704772918851717e00, 1.511365399792853e00, -1.115289067637071e-01]) * AU,
+    np.array([-4.142495775785003e03, 1.305304733174904e04, 3.854785819752404e01]),
     1.898e27,
 )
 
 venus = Body(
     ORANGE,
     0.949,
-    Vector3(3.767586589387518e-01, 6.096285845914635e-01, -1.366913498677996e-02) * AU,
-    Vector3(-2.970885187788254e04, 1.854691206999238e04, 1.969344555554133e03),
+    np.array([3.767586589387518e-01, 6.096285845914635e-01, -1.366913498677996e-02]) * AU,
+    np.array([-2.970885187788254e04, 1.854691206999238e04, 1.969344555554133e03]),
     4.8685e24,
 )
 
 mars = Body(
     RED,
     0.532,
-    Vector3(-7.405291211708632e-01, 1.452944259261813e00, 4.861778406962673e-02) * AU,
-    Vector3(-2.072274803097698e04, -8.848861397338558e03, 3.233078954361095e02),
+    np.array([-7.405291211708632e-01, 1.452944259261813e00, 4.861778406962673e-02]) * AU,
+    np.array([-2.072274803097698e04, -8.848861397338558e03, 3.233078954361095e02]),
     6.39e23,
 )
 
 uranus = Body(
     BLUE,
     4.01 / 5,
-    Vector3(1.318193324076657e01, 1.457795067541527e01, -1.166313290118892e-01) * AU,
-    Vector3(-5.100987027758054e03, 4.250202813282490e03, 8.207046388370087e01),
+    np.array([1.318193324076657e01, 1.457795067541527e01, -1.166313290118892e-01]) * AU,
+    np.array([-5.100987027758054e03, 4.250202813282490e03, 8.207046388370087e01]),
     8.6811e24,
 )
 
 neptune = Body(
     BLUE,
     3.88 / 5,
-    Vector3(2.976877605000455e01, -2.750966044048722e00, -6.294024336722218e-01) * AU,
-    Vector3(4.643812712803050e02, 5.444339754400878e03, -1.230818583920708e02),
+    np.array([2.976877605000455e01, -2.750966044048722e00, -6.294024336722218e-01]) * AU,
+    np.array([4.643812712803050e02, 5.444339754400878e03, -1.230818583920708e02]),
     1.02409e26,
 )
 
 saturn = Body(
     BROWN,
     9.45 / 5,
-    Vector3(8.305195501443066e00, -5.220660638189502e00, -2.398939811841545e-01) * AU,
-    Vector3(4.600536590796957e03, 8.158326300996555e03, -3.244831811891196e02),
+    np.array([8.305195501443066e00, -5.220660638189502e00, -2.398939811841545e-01]) * AU,
+    np.array([4.600536590796957e03, 8.158326300996555e03, -3.244831811891196e02]),
     5.683e26,
 )
 
 # all simulated entities
-bodies = [sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune]
+bodies_state = Bodies.from_bodies([sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune])
+bodies_t = Bodies.from_bodies([sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune])
+
+#bodies_t.bodies[0].position = Vector3(0.5*AU,0.5*AU,0.5*AU)
+
 
 glEnable(GL_DEPTH_TEST)
 glEnable(GL_BLEND)
@@ -240,7 +244,7 @@ while not glfw.window_should_close(window):
         frame_count = 0
         anchor_time = current_frame_time
     elif current_frame_time > 10.0:
-        glfw.set_window_should_close(window, True)
+        #glfw.set_window_should_close(window, True)
         pass
 
     # key presses
@@ -264,9 +268,10 @@ while not glfw.window_should_close(window):
     sphere_shader.setFloat("iTime", glfw.get_time())
 
     # -------------------------------------------------------- SIM -------------------------------------------------------- #
-    update_bodies_rungekutta(bodies, delta_time)
+    #update_bodies_rungekutta(bodies, delta_time)
+    update_bodies_rungekutta_2(bodies_state, delta_time)
 
-    for body in bodies:
+    for body in bodies_state.bodies:
         body.draw(sphere_shader, scale)
 
         body.draw_orbit(orbits_shader, scale)

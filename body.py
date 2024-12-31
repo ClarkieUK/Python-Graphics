@@ -6,10 +6,10 @@ from sphere import Sphere
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 from shader import *
+from dataclasses import dataclass
 
-
+@dataclass
 class Body:
-
     def __init__(self, color, radius, position, velocity, mass):
 
         # display
@@ -19,9 +19,9 @@ class Body:
         # physics
         self.position = position
         self.velocity = velocity
-        self.force = Vector3(0, 0, 0)  # using my own vector class for computation probably should switch to numpy
+        self.force = np.array([0,0,0])
         self.mass = mass
-        self.acceleration = Vector3(0, 0, 0)
+        self.acceleration = np.array([0,0,0])
 
         # mesh
         self.mesh = Sphere(self.radius, 50, self.position)
@@ -95,3 +95,20 @@ class Body:
 
         # frees the vbo.
         glBindBuffer(GL_ARRAY_BUFFER, 0)
+
+
+class Bodies:
+    def __init__(self, bodies : list[Body], positions: np.array, velocities: np.array, masses: np.array) -> None:
+        assert positions.shape[0] == velocities.shape[0] == masses.shape[0], "mismatched array dimensions"
+        self.bodies = bodies
+        self.positions = positions
+        self.velocities = velocities
+        self.masses = masses
+
+    @classmethod
+    def from_bodies(cls, bodies: list[Body]) -> 'Bodies':
+        bodies = [body for body in bodies]
+        positions = np.array([body.position for body in bodies])
+        velocities = np.array([body.velocity for body in bodies])
+        masses = np.array([body.mass for body in bodies])
+        return cls(bodies, positions, velocities, masses)
