@@ -224,10 +224,11 @@ glEnable(GL_DEPTH_TEST)
 glEnable(GL_BLEND)
 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 glClearColor(0, 0.1, 0.1, 1)
+#glfw.swap_interval(0)
 
 # event loop
 while not glfw.window_should_close(window):
-    profiler.enable()
+    #profiler.enable()
     # delta time
     current_frame_time = glfw.get_time()
     delta_time = current_frame_time - last_frame
@@ -274,10 +275,10 @@ while not glfw.window_should_close(window):
     glBindVertexArray(0)
     glfw.poll_events()
     glfw.swap_buffers(window)
-    profiler.disable()
+    #profiler.disable()
 
 # free resources
 glfw.terminate()
 
-stats = pstats.Stats(profiler).sort_stats("ncalls")
-stats.print_stats()
+#stats = pstats.Stats(profiler).sort_stats("ncalls")
+#stats.print_stats()

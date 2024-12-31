@@ -19,7 +19,9 @@ def newtonian_gravitation(t : float, Y_in : np.array) -> np.array : # cant decid
             if i == j :
                 continue # Skip self computation
             else : 
-                a = a + acceleration(Y_in[i * number_of_elements + 0],Y_in[j * number_of_elements + 0],Y_in[j * number_of_elements + 2])
+                a = a + acceleration(Y_in[i * number_of_elements + 0],
+                                     Y_in[j * number_of_elements + 0],
+                                     Y_in[j * number_of_elements + 2])
                 
         # return rates of change of each element
         Y_out = np.append(Y_out,v)

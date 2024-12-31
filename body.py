@@ -19,7 +19,7 @@ class Body:
         # physics
         self.position = position
         self.velocity = velocity
-        self.force = Vector3(0, 0, 0)  # using my own vector class for computation
+        self.force = Vector3(0, 0, 0)  # using my own vector class for computation probably should switch to numpy
         self.mass = mass
         self.acceleration = Vector3(0, 0, 0)
 
@@ -86,12 +86,12 @@ class Body:
             self.orbit_points[0 : self.orbit_index],
         )
 
-        # set up vertex attributes
+        # set up vertex attributes for shader
         glEnableVertexAttribArray(0)
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 12, ctypes.c_void_p(0))
 
         # draw orbit
         glDrawArrays(GL_LINE_STRIP, 0, self.max_orbit_points)
 
-        # unsure if required, frees the vbo.
+        # frees the vbo.
         glBindBuffer(GL_ARRAY_BUFFER, 0)

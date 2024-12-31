@@ -18,3 +18,7 @@ z is out of the screen, x is right, and y is up.
 python -m cProfile -o debug.dat main.py
 
 snakeviz debug.dat
+
+vector3 gives 3.06 ish seconds integration time
+
+numpy gives ->
