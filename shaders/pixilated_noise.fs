@@ -215,5 +215,6 @@ void main() {
     vec3 color = colorPixelPalette(total);
     
     // Output the final color (can be scaled, shifted, or mapped as needed)
+
     gl_FragColor = vec4(color, 1.0);
 }

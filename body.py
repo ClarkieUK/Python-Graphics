@@ -7,7 +7,7 @@ from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 from shader import *
 from dataclasses import dataclass
-from collections.abc import Sequence
+from collections.abc import MutableSequence
 
 class Body:
     def __init__(self, color, radius, position, velocity, mass):
@@ -46,7 +46,7 @@ class Body:
         # drawing the body consists of just drawing the sphere
         # mesh at the bodies position
         self.mesh.draw(shader, self.position, scale)
-
+        
         # pass position to an array for drawing the trail
         self.orbit_points[self.orbit_index] = [
             self.position[0] * scale,
@@ -95,9 +95,10 @@ class Body:
 
         # frees the vbo.
         glBindBuffer(GL_ARRAY_BUFFER, 0)
+        
+    
 
-
-class Bodies(Sequence):
+class Bodies(MutableSequence):
     def __init__(self, bodies : list[Body], positions: np.array, velocities: np.array, masses: np.array) -> None:
         assert positions.shape[0] == velocities.shape[0] == masses.shape[0], "mismatched array dimensions"
         self.bodies = bodies
@@ -121,3 +122,19 @@ class Bodies(Sequence):
         body.velocity = self.velocities[key]
         body.mass = self.masses[key]
         return body
+    
+    def __setitem__(self, key, index, value) -> None :
+        self.__dict__[key][index] = value
+        self.bodies[index] = self.__getitem__(index)
+    
+    def update(self, key, index, value) -> None : 
+        self.__setitem__(key,index,value)
+    
+    def __delitem__(self, index) -> None :
+        del self.bodies[index]
+        self.positions = np.delete(self.positions, index, axis=0)
+        self.velocities = np.delete(self.velocities, index, axis=0)
+        self.masses = np.delete(self.masses, index, axis=0)
+    
+    def insert() -> None :
+        pass

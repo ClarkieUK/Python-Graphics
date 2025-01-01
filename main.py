@@ -121,7 +121,7 @@ if not glfw.init():
     raise Exception("glfw library not found...")
 
 # create window
-window = glfw.create_window(width, height, "OpenGL Practice", None, None)
+window = glfw.create_window(width, height, "", None, None)
 
 # check if window creation was good
 if not window:
@@ -130,6 +130,7 @@ if not window:
 
 # set window position and callbacks
 xbuf, ybuf = (GetSystemMetrics(0) - width) / 2, (GetSystemMetrics(1) - height) / 2
+screen_centre = (GetSystemMetrics(0)/2 , GetSystemMetrics(1)/2)
 glfw.set_window_pos(window, int(xbuf), int(ybuf))
 glfw.set_window_size_callback(window, window_resize)
 glfw.set_cursor_pos_callback(window, mouse_callback)
@@ -143,6 +144,7 @@ glfw.set_input_mode(window, glfw.CURSOR, glfw.CURSOR_DISABLED)
 # create shader programs
 sphere_shader = Shader("pixilated_noise.vs", "pixilated_noise.fs")
 orbits_shader = Shader("orbit.vs", "orbit.fs")
+skybox_shader = Shader("skybox.vs","skybox.fs")
 
 sun = Body(
     YELLOW,
@@ -219,6 +221,8 @@ saturn = Body(
 # all simulated entities
 bodies_state = Bodies.from_bodies([sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune])
 
+skybox = Sphere(2500,50)
+
 glEnable(GL_DEPTH_TEST)
 glEnable(GL_BLEND)
 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
@@ -234,6 +238,8 @@ while not glfw.window_should_close(window):
     last_frame = current_frame_time
     frame_count += 1
 
+    glfw.set_window_title(window, str(1/delta_time))
+
     if (current_frame_time - anchor_time) >= 1.0:
         print("Avg. FPS :", frame_count)
         frame_count = 0
@@ -244,6 +250,9 @@ while not glfw.window_should_close(window):
 
     # key presses
     process_input(window, delta_time)
+
+    if glfw.get_key(window, glfw.KEY_UP) == glfw.PRESS :
+        bodies_state.update('positions',0,bodies_state.positions[0]+np.array([0.01,0.01,0.01])*AU)
 
     # begin drawing
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -259,14 +268,20 @@ while not glfw.window_should_close(window):
     orbits_shader.setMat4("view", view)
     sphere_shader.setMat4("projection", projection)
     orbits_shader.setMat4("projection", projection)
+    skybox_shader.setMat4("view", view)
+    skybox_shader.setMat4("projection", projection)
 
     sphere_shader.setFloat("iTime", glfw.get_time())
+    skybox_shader.setFloat("iTime", glfw.get_time())
 
     # -------------------------------------------------------- SIM -------------------------------------------------------- #
     update_bodies_rungekutta(bodies_state, delta_time)
+    
     for body in bodies_state:
         body.draw(sphere_shader, scale)
         body.draw_orbit(orbits_shader, scale)
+
+    skybox.draw(skybox_shader,np.array([1.0,1.0,1.0]),1)
 
     # swap back and front pages
     glBindVertexArray(0)
