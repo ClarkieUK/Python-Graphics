@@ -316,14 +316,16 @@ while not glfw.window_should_close(window):
     delta_time = current_frame_time - last_frame
     last_frame = current_frame_time
     frame_count += 1
+    sim_date = datetime.fromtimestamp(unix_start+simulated_time).strftime("%A, %B %d, %Y %H:%M:%S")
 
+    # set window title as framerate
     glfw.set_window_title(window, str(1/delta_time))
 
     if (current_frame_time - anchor_time) >= 1.0:
         
         print("Avg. FPS :", frame_count)
         print("Simulated Time :", f"{simulated_time/3.154e+7:.5f}" , 'yr')
-        print(datetime.fromtimestamp(unix_start+simulated_time).strftime("%A, %B %d, %Y %H:%M:%S"))
+        print(sim_date)
         print('\n')
         
         frame_count = 0
@@ -361,7 +363,8 @@ while not glfw.window_should_close(window):
         timestep = (3.154e+7) * delta_time/(16) # delta_time = 1/fps
         simulated_time += timestep
         
-        [body.log(datetime.fromtimestamp(unix_start+simulated_time).strftime("%A, %B %d, %Y %H:%M:%S")) for body in bodies_state.bodies]
+        # log info for each body
+        [body.log(sim_date) for body in bodies_state.bodies]
         
         #profiler.enable()
         update_bodies_rungekutta(bodies_state, timestep)
