@@ -44,6 +44,10 @@ class Body:
             GL_DYNAMIC_DRAW,
         )
         glBindBuffer(GL_ARRAY_BUFFER, 0)
+        
+        # logging
+        self.file = open(os.path.join('simulation_results', self.ID+'.csv'), 'a', newline='') 
+        self.writer = csv.writer(self.file)
 
     def draw(self, shader, scale):
         # drawing the body consists of just drawing the sphere
@@ -100,11 +104,9 @@ class Body:
         glBindBuffer(GL_ARRAY_BUFFER, 0)
         
     def log(self,date) :
-        with open(os.path.join('simulation_results', self.ID+'.csv'), 'a', newline='') as f:
-                writer = csv.writer(f)
-                writer.writerow([date,
-                                 self.position[0], self.position[1], self.position[2],
-                                 self.velocity[0], self.velocity[1], self.velocity[2]])  # Header row
+        self.writer.writerow([date,
+                            self.position[0], self.position[1], self.position[2],
+                            self.velocity[0], self.velocity[1], self.velocity[2]])  
 
 class Bodies(MutableSequence):
     def __init__(self, bodies : list[Body], positions: np.array, velocities: np.array, masses: np.array) -> None:

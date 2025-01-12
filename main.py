@@ -384,6 +384,7 @@ while not glfw.window_should_close(window):
     glfw.swap_buffers(window)
 
 # free resources
+[body.file.close() for body in bodies_state.bodies]
 glfw.terminate()
 
 #stats = pstats.Stats(profiler).sort_stats("ncalls")
