@@ -1,5 +1,4 @@
 import numpy as np
-from vector import Vector3
 from math_functions import *
 
 def newtonian_gravitation(t: float, positions: np.array, velocities: np.array, masses: np.array) -> tuple[np.array, np.array] : # cant decide between numpy or lists...

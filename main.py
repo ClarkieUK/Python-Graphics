@@ -13,6 +13,7 @@ from PIL import Image
 # numeracy
 import numpy as np
 from integrators import update_bodies_rungekutta 
+from datetime import datetime
 
 # abstractions
 from camera import Camera
@@ -24,20 +25,18 @@ from vector import *
 
 # debugging
 import cProfile, pstats
-
 profiler = cProfile.Profile()
 
 # display
 width, height = 1200, 1200
 
-# delta_time
-last_frame = 0.0
-anchor_time = 0.0
-frame_count = 0
-
-# camera
+# camera , sim
 main_camera = Camera()
 first_mouse = True
+simming = False
+simming_pressed = False
+simulated_time = 0
+unix_start = 1735689600 # 1st of jan 2025, at 00:00
 
 # setup constants
 WHITE = np.array([255, 255, 255])
@@ -61,7 +60,7 @@ scale = 8 / AU
 
 
 # callbacks
-def process_input(window, delta_time):
+def process_input_camera(window, delta_time):
 
     if (
         glfw.get_key(window, glfw.KEY_ESCAPE) == glfw.PRESS
@@ -89,10 +88,28 @@ def process_input(window, delta_time):
     if glfw.get_key(window, glfw.KEY_LEFT_SHIFT) == glfw.RELEASE:
         main_camera.processKeyboardSpeed("SLOW_DOWN", delta_time)
 
+def process_input_sim(window, delta_time, simming, simming_pressed) :
 
+    if glfw.get_key(window, glfw.KEY_R) == glfw.PRESS :
+        if not simming_pressed :
+            simming = not simming 
+            simming_pressed = True
+            
+    if glfw.get_key(window, glfw.KEY_R) == glfw.RELEASE :
+        simming_pressed = False
+        
+    return simming, simming_pressed
+            
+def process_input_scale(window, scale) :
+    if glfw.get_key(window, glfw.KEY_UP) == glfw.PRESS :
+        scale -= 0.01/AU
+    if glfw.get_key(window, glfw.KEY_DOWN) == glfw.PRESS :
+        scale += 0.01/AU
+    
+    return scale
+    
 def window_resize(window, width, height):
     glViewport(0, 0, width, height)
-
 
 def mouse_callback(window, x_position, y_position):
     global first_mouse
@@ -147,91 +164,153 @@ orbits_shader = Shader("orbit.vs", "orbit.fs")
 skybox_shader = Shader("skybox.vs","skybox.fs")
 
 sun = Body(
+    'SUN',
     YELLOW,
     2,
-    np.array([-8.974133574359094e-03, -4.482427452346882e-04, 2.127030817970091e-04]) * AU,
-    np.array([2.943740906566515e-00, -1.522269030106718e01, 5.405294312927581e-02]),
+    np.array([-8.572865039469250E+05, -7.346088835335051E+05, 2.685423265526889E+04]) * 1e3,
+    np.array([1.239859639798033E-02, -6.348466611140617E-03, -2.037876555553517E-04]) * 1e3,
     1.98892e30,
 )
 
 earth = Body(
+    'EARTH',
     LIGHT_BLUE,
-    1,
-    np.array([-9.505921700191389e-01, 3.087952119351821e-01, 1.989011142050173e-04]) * AU,
-    np.array([-9.765270895434471e03, -2.842566374064967e04, 1.340272026562062e-00]),
+    0.05,
+    np.array([-2.758794880287251E+07, 1.439239583084676E+08, 1.921064327326417E+04]) * 1e3,
+    np.array([-2.977686364628585E+01, -5.535813340802556E+00, -1.943387942073826E-04]) * 1e3,
     5.9742e24,
 )
 
+moon = Body(
+    'MOON',
+    LIGHT_BLUE,
+    0.05,
+    np.array([-2.743589644230116E+07, 1.435751546419631E+08, -1.145344989768416E+04]) * 1e3,
+    np.array([-2.884424012475249E+01, -5.089320873036412E+00, 3.814177365090332E-02]) * 1e3,
+    7.34767309e22,
+)
+
 mercury = Body(
+    'MERCURY',
     GRAY,
-    0.383,
-    np.array([2.149048126431211e-01, -3.703275102221233e-01, -5.054911078568054e-02]) * AU,
-    np.array([3.194733455939798e04, 2.760819992651870e04, -6.726501719165086e02]),
+    0.05,
+    np.array([-5.879699189509091E+07, -2.492820404148239E+07, 3.364042452841429E+06]) * 1e3,
+    np.array([8.711982611106873E+00, -4.284856986770977E+01, -4.299279282370732E+00]) * 1e3,
     3.3e23,
 )
 
 jupiter = Body(
+    'JUPITER',
     BROWN,
-    11.21 / 5,
-    np.array([4.704772918851717e00, 1.511365399792853e00, -1.115289067637071e-01]) * AU,
-    np.array([-4.142495775785003e03, 1.305304733174904e04, 3.854785819752404e01]),
+    0.05,
+    np.array([1.571230833020991E+08, 7.429840488421507E+08, -6.597049828231782E+06]) * 1e3,
+    np.array([-1.293244436609816E+01, 3.325781476287804E+00, 2.755437569190042E-01]) * 1e3,
     1.898e27,
 )
 
+hektor = Body(
+    'HEKTOR',
+    BROWN,
+    1,
+    np.array([-6.397833140104287E+08, 4.247999539310665E+08, 7.136157349165726E+07]) * 1e3,
+    np.array([-7.236765128973537E+00, -1.039386299736063E+01, -3.955885153432084E+00]) * 1e3,
+    7.9e18,
+)
+
+io = Body(
+    'IO',
+    BROWN,
+    0.05,
+    np.array([1.567913160787357E+08, 7.427243216977766E+08, -6.610965628552347E+06]) * 1e3,
+    np.array([-2.289626937008920E+00, -1.036623645612734E+01, -5.726257077059449E-02]) * 1e3,
+    8.9319e22 ,
+)
+
+ganymede = Body(
+    'GANYMEDE',
+    BROWN,
+    0.05,
+    np.array([1.580935027059082E+08, 7.425362306939588E+08, -6.600282950611502E+06]) * 1e3,
+    np.array([-8.370291186955019E+00, 1.321209554904819E+01, 7.178620386576879E-01]) * 1e3,
+    1.4819e23 ,
+)
+
+callisto = Body(
+    'CALLISTO',
+    BROWN,
+    0.05,
+    np.array([1.557607915780463E+08, 7.442947293729103E+08, -6.574354439074993E+06]) * 1e3,
+    np.array([-1.862955468746259E+01, -2.522420287457085E+00, 1.607200062736558E-02]) * 1e3,
+    1.4819e23 ,
+)
+
 venus = Body(
+    'VENUS',
     ORANGE,
-    0.949,
-    np.array([3.767586589387518e-01, 6.096285845914635e-01, -1.366913498677996e-02]) * AU,
-    np.array([-2.970885187788254e04, 1.854691206999238e04, 1.969344555554133e03]),
+    0.05,
+    np.array([6.697319534635594E+07, 8.337171945245868E+07, -2.731933993919346E+06]) * 1e3,
+    np.array([-2.735548307021769E+01, 2.182743070706988E+01, 1.878804135388283E+00]) * 1e3,
     4.8685e24,
 )
 
 mars = Body(
+    'MARS',
     RED,
-    0.532,
-    np.array([-7.405291211708632e-01, 1.452944259261813e00, 4.861778406962673e-02]) * AU,
-    np.array([-2.072274803097698e04, -8.848861397338558e03, 3.233078954361095e02]),
+    0.05,
+    np.array([-7.890038131682467E+07, 2.274372361241295E+08, 6.722196400986686E+06]) * 1e3,
+    np.array([-2.199759485544059E+01, -5.787405095467102E+00, 4.184257990348734E-01]) * 1e3,
     6.39e23,
 )
 
 uranus = Body(
+    'URANUS',
     BLUE,
-    4.01 / 5,
-    np.array([1.318193324076657e01, 1.457795067541527e01, -1.166313290118892e-01]) * AU,
-    np.array([-5.100987027758054e03, 4.250202813282490e03, 8.207046388370087e01]),
+    0.05,
+    np.array([1.660222886897103E+09, 2.406966367551249E+09, -1.256907181827700E+07]) * 1e3,
+    np.array([-5.655911180719731E+00, 3.549247278075849E+00, 8.652020191096454E-02]) * 1e3,
     8.6811e24,
 )
 
 neptune = Body(
+    'NEPTUNE',
     BLUE,
-    3.88 / 5,
-    np.array([2.976877605000455e01, -2.750966044048722e00, -6.294024336722218e-01]) * AU,
-    np.array([4.643812712803050e02, 5.444339754400878e03, -1.230818583920708e02]),
+    0.05,
+    np.array([4.469116222588663E+09, -9.560778256566879E+07, -1.010264767638457E+08]) * 1e3,
+    np.array([8.064561683471368E-02, 5.465730017544922E+00, -1.151205185674022E-01]) * 1e3,
     1.02409e26,
 )
 
 saturn = Body(
+    'SATURN',
     BROWN,
-    9.45 / 5,
-    np.array([8.305195501443066e00, -5.220660638189502e00, -2.398939811841545e-01]) * AU,
-    np.array([4.600536590796957e03, 8.158326300996555e03, -3.244831811891196e02]),
+    0.05,
+    np.array([1.414498231862034E+09, -2.647172137275474E+08, -5.171551879510410E+07]) * 1e3,
+    np.array([1.240660798615463E+00, 9.473546595187154E+00, -2.135791731559418E-01]) * 1e3,
     5.683e26,
 )
 
-# all simulated entities
-bodies_state = Bodies.from_bodies([sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune])
+# entities
+bodies_state = Bodies.from_bodies([sun, mercury, venus, earth, moon, mars, jupiter, hektor, ganymede, callisto, saturn, uranus, neptune])
+bodies_state.check_csvs()
 
-skybox = Sphere(2500,50)
+skybox = Sphere(2500,15)
 
+# opengl / glfw settings
 glEnable(GL_DEPTH_TEST)
 glEnable(GL_BLEND)
 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-glClearColor(0, 0.1, 0.1, 1)
-#glfw.swap_interval(0)
+#glClearColor(0, 0.1, 0.1, 1)
+glClearColor(0, 0, 0, 1)
+glfw.swap_interval(0)
+
+# delta_time
+last_frame = 0.0
+anchor_time = 0.0
+frame_count = 0
 
 # event loop
 while not glfw.window_should_close(window):
-    #profiler.enable()
+
     # delta time
     current_frame_time = glfw.get_time()
     delta_time = current_frame_time - last_frame
@@ -241,7 +320,12 @@ while not glfw.window_should_close(window):
     glfw.set_window_title(window, str(1/delta_time))
 
     if (current_frame_time - anchor_time) >= 1.0:
+        
         print("Avg. FPS :", frame_count)
+        print("Simulated Time :", f"{simulated_time/3.154e+7:.5f}" , 'yr')
+        print(datetime.fromtimestamp(unix_start+simulated_time).strftime("%A, %B %d, %Y %H:%M:%S"))
+        print('\n')
+        
         frame_count = 0
         anchor_time = current_frame_time
     elif current_frame_time > 10.0:
@@ -249,13 +333,9 @@ while not glfw.window_should_close(window):
         pass
 
     # key presses
-    process_input(window, delta_time)
-
-    if glfw.get_key(window, glfw.KEY_UP) == glfw.PRESS :
-        bodies_state.update('positions',0,bodies_state.positions[0]+np.array([0.01,0.01,0.01])*AU)
-
-    # begin drawing
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+    process_input_camera(window, delta_time)
+    simming , simming_pressed = process_input_sim(window, delta_time, simming, simming_pressed)
+    scale = process_input_scale(window, scale)
 
     # update view and projection matrices from camera manipulation
     view = main_camera.getViewMatrix()
@@ -266,28 +346,39 @@ while not glfw.window_should_close(window):
     # set uniforms (maybe make this a loop for a shader collection)
     sphere_shader.setMat4("view", view)
     orbits_shader.setMat4("view", view)
+    skybox_shader.setMat4("view", view)
     sphere_shader.setMat4("projection", projection)
     orbits_shader.setMat4("projection", projection)
-    skybox_shader.setMat4("view", view)
     skybox_shader.setMat4("projection", projection)
-
+    
     sphere_shader.setFloat("iTime", glfw.get_time())
     skybox_shader.setFloat("iTime", glfw.get_time())
 
     # -------------------------------------------------------- SIM -------------------------------------------------------- #
-    update_bodies_rungekutta(bodies_state, delta_time)
+    
+    if simming :
+        
+        timestep = (3.154e+7) * delta_time/(16) # delta_time = 1/fps
+        simulated_time += timestep
+        
+        [body.log(datetime.fromtimestamp(unix_start+simulated_time).strftime("%A, %B %d, %Y %H:%M:%S")) for body in bodies_state.bodies]
+        
+        #profiler.enable()
+        update_bodies_rungekutta(bodies_state, timestep)
+        #profiler.disable()
+    
+    # begin drawing
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     
     for body in bodies_state:
         body.draw(sphere_shader, scale)
         body.draw_orbit(orbits_shader, scale)
-
-    skybox.draw(skybox_shader,np.array([1.0,1.0,1.0]),1)
+        
+    #skybox.draw(skybox_shader,np.array([0.0,0.0,0.0]),1)
 
     # swap back and front pages
-    glBindVertexArray(0)
     glfw.poll_events()
     glfw.swap_buffers(window)
-    #profiler.disable()
 
 # free resources
 glfw.terminate()

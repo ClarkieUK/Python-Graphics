@@ -8,9 +8,11 @@ from OpenGL.GL.shaders import compileProgram, compileShader
 from shader import *
 from dataclasses import dataclass
 from collections.abc import MutableSequence
+import csv
+import os
 
 class Body:
-    def __init__(self, color, radius, position, velocity, mass):
+    def __init__(self, ID, color, radius, position, velocity, mass):
 
         # display
         self.radius = radius
@@ -25,9 +27,10 @@ class Body:
 
         # mesh
         self.mesh = Sphere(self.radius, 50, self.position)
+        self.ID = ID
 
         # orbit
-        self.max_orbit_points = 100
+        self.max_orbit_points = 1000
         self.orbit_points = np.full((self.max_orbit_points, 3), None, dtype=np.float32)
         self.orbit_index = 0
 
@@ -96,7 +99,12 @@ class Body:
         # frees the vbo.
         glBindBuffer(GL_ARRAY_BUFFER, 0)
         
-    
+    def log(self,date) :
+        with open(os.path.join('simulation_results', self.ID+'.csv'), 'a', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow([date,
+                                 self.position[0], self.position[1], self.position[2],
+                                 self.velocity[0], self.velocity[1], self.velocity[2]])  # Header row
 
 class Bodies(MutableSequence):
     def __init__(self, bodies : list[Body], positions: np.array, velocities: np.array, masses: np.array) -> None:
@@ -112,7 +120,7 @@ class Bodies(MutableSequence):
         velocities = np.array([body.velocity for body in bodies])
         masses = np.array([body.mass for body in bodies])
         return cls(bodies, positions, velocities, masses)
-    
+                
     def __len__(self) -> int:
         return len(self.bodies)
     
@@ -138,3 +146,9 @@ class Bodies(MutableSequence):
     
     def insert() -> None :
         pass
+    
+    def check_csvs(self) -> None :
+        for body in self.bodies :
+            with open(os.path.join('simulation_results', body.ID+'.csv'), 'w', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow(['Date-time', 'px (km)', 'py (km)', 'pz (km)', 'vx (km/s)', 'vy (km/s)', 'vz (km/s)'])  # Header row

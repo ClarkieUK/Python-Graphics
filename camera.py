@@ -58,6 +58,10 @@ class Camera() :
          # eye pos, target, up vector
         return glm.lookAt(self.Position,self.Position + self.Front, self.Up)
     
+    def getViewMatrixTarget(self, target) :
+         # eye pos, target, up vector
+        return glm.lookAt(self.Position, target, self.Up)
+    
     def processKeyboard(self, state : Camera_Movement, delta_time : float) : # movement
         
         velocity = float(self.MovementSpeed * delta_time)

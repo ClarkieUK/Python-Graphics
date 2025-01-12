@@ -1,9 +1,8 @@
 from odes import newtonian_gravitation
 import numpy as np
 
-def update_bodies_rungekutta(bodies_state : object, delta_time : float) : # cant decide between using numpy or lists...
-
-    dt = (3.154e+7) * delta_time/(8) # delta_time = 1/fps
+def update_bodies_rungekutta(bodies_state : object, dt : float) : # cant decide between using numpy or lists...
+    
     t  = 0 # no time dependence
     
     drs1, dvs1 = newtonian_gravitation(t,        bodies_state.positions,          bodies_state.velocities,          bodies_state.masses)
