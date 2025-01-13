@@ -10,7 +10,7 @@ in vec4 TruePosition;
 uniform sampler2D iTexture;
 uniform float iTime;
 
-out vec4 gl_FragColor;  
+out vec4 fragColor;  
 
 
 // perlin required functional stuff
@@ -216,5 +216,5 @@ void main() {
     
     // Output the final color (can be scaled, shifted, or mapped as needed)
 
-    gl_FragColor = vec4(color, 1.0);
+    fragColor = vec4(color, 1.0);
 }

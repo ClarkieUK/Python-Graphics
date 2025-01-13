@@ -1,4 +1,4 @@
-#version 330 core
+#version 330 
 #ifdef GL_ES
 #endif
 
@@ -22,7 +22,7 @@ in vec4 TruePosition;
 
 uniform float iTime;
 
-out vec4 gl_FragColor; 
+out vec4 fragColor; 
 
 float SCurve(float value) {
     if (value < 0.5) {
@@ -90,5 +90,5 @@ void main() {
     C.g = mix(L.g, SCurve(C.g), 0.9); 
     C.b = mix(L.b, SCurve(C.b), 0.6);     
 
-    gl_FragColor = vec4(C.xyz, 0.5);    
+    fragColor = vec4(C.xyz, 0.5);    
 }
