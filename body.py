@@ -30,7 +30,7 @@ class Body:
         self.ID = ID
 
         # orbit
-        self.max_orbit_points = 1000
+        self.max_orbit_points = 10000
         self.orbit_points = np.full((self.max_orbit_points, 3), None, dtype=np.float32)
         self.orbit_index = 0
 

@@ -12,7 +12,7 @@ from PIL import Image
 
 # numeracy
 import numpy as np
-from integrators import update_bodies_rungekutta 
+from integrators import update_bodies_rungekutta , update_bodies_butchers_rungekutta, update_bodies_fehlberg_rungekutta
 from datetime import datetime
 
 # abstractions
@@ -28,7 +28,7 @@ import cProfile, pstats
 profiler = cProfile.Profile()
 
 # display
-width, height = 1200, 1200
+width, height = 900, 900
 
 # camera , sim
 main_camera = Camera()
@@ -37,6 +37,7 @@ simming = False
 simming_pressed = False
 simulated_time = 0
 unix_start = 1735689600 # 1st of jan 2025, at 00:00
+fehlberg_timestep = (3.154e+7) * 1/(16 * 144)
 
 # setup constants
 WHITE = np.array([255, 255, 255])
@@ -290,7 +291,8 @@ saturn = Body(
 )
 
 # entities
-bodies_state = Bodies.from_bodies([sun, mercury, venus, earth, moon, mars, jupiter, hektor, ganymede, callisto, saturn, uranus, neptune])
+bodies_state = Bodies.from_bodies([sun, mercury, venus, earth, moon, mars, jupiter, hektor, ganymede, io, callisto, saturn, uranus, neptune])
+bodies_state = Bodies.from_bodies([sun, mercury, venus, earth, mars, jupiter, hektor, saturn, uranus, neptune])
 bodies_state.check_csvs()
 
 skybox = Sphere(2500,15)
@@ -361,13 +363,18 @@ while not glfw.window_should_close(window):
     if simming :
         
         timestep = (3.154e+7) * delta_time/(16) # delta_time = 1/fps
-        simulated_time += timestep
+        simulated_time += fehlberg_timestep # += timestep
         
         # log info for each body
         [body.log(sim_date) for body in bodies_state.bodies]
         
+        # check if k5 - k4 below certain value , if true repeat with 
+        # lower timestep selected 
+        
         #profiler.enable()
-        update_bodies_rungekutta(bodies_state, timestep)
+        #update_bodies_rungekutta(bodies_state, timestep)
+        #update_bodies_butchers_rungekutta(bodies_state, timestep)
+        fehlberg_timestep = update_bodies_fehlberg_rungekutta(bodies_state, fehlberg_timestep)
         #profiler.disable()
     
     # begin drawing
