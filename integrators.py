@@ -1,7 +1,7 @@
 from odes import newtonian_gravitation
 import numpy as np
 
-def update_bodies_rungekutta(bodies_state : object, dt : float) : # cant decide between using numpy or lists...
+def update_bodies_rungekutta(bodies_state : object, dt : float) -> None :
     
     t  = 0 # no time dependence
     
@@ -20,7 +20,7 @@ def update_bodies_rungekutta(bodies_state : object, dt : float) : # cant decide 
     bodies_state.positions += drs
     bodies_state.velocities += dvs 
     
-def update_bodies_butchers_rungekutta(bodies_state : object, dt : float) : # cant decide between using numpy or lists...
+def update_bodies_butchers_rungekutta(bodies_state : object, dt : float) -> None : 
     
     t  = 0 # no time dependence
     
@@ -55,28 +55,35 @@ def update_bodies_butchers_rungekutta(bodies_state : object, dt : float) : # can
         bodies_state.positions += drs
         bodies_state.velocities += dvs 
     
-def update_bodies_fehlberg_rungekutta(bodies_state : object, dt : float) : # cant decide between using numpy or lists...
+def update_bodies_fehlberg_rungekutta(bodies_state : object, dt : float) -> float :
     # https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta%E2%80%93Fehlberg_method
     # https://en.wikipedia.org/wiki/Adaptive_step_size
-    print(dt)
-    t  = 0 # no time dependence
     
-    drs1, dvs1 = newtonian_gravitation(t,        bodies_state.positions,          bodies_state.velocities,          bodies_state.masses)
+    t = 0 # no time dependence
+    
+    drs1, dvs1 = newtonian_gravitation(t,          bodies_state.positions,
+                                                   bodies_state.velocities,          
+                                                   bodies_state.masses)
     drs1 *= dt; dvs1 *= dt
     drs2, dvs2 = newtonian_gravitation(t + 1/2*dt, bodies_state.positions + 1/2*drs1,
-                                                   bodies_state.velocities + 1/2*dvs1, bodies_state.masses)
+                                                   bodies_state.velocities + 1/2*dvs1, 
+                                                   bodies_state.masses)
     drs2 *= dt; dvs2 *= dt
     drs3, dvs3 = newtonian_gravitation(t + 1/2*dt, bodies_state.positions + 1/4*drs1 + 1/4*drs2,
-                                                   bodies_state.velocities + 1/4*dvs1 + 1/4*dvs2, bodies_state.masses)
+                                                   bodies_state.velocities + 1/4*dvs1 + 1/4*dvs2, 
+                                                   bodies_state.masses)
     drs3 *= dt; dvs3 *= dt
-    drs4, dvs4 = newtonian_gravitation(t + dt, bodies_state.positions + 0*drs1 + (-1)*drs2 + 2*drs3,
-                                                   bodies_state.velocities + 0*dvs1 + (-1)*dvs2 + 2*dvs3, bodies_state.masses)
+    drs4, dvs4 = newtonian_gravitation(t + dt,     bodies_state.positions + 0*drs1 + (-1)*drs2 + 2*drs3,
+                                                   bodies_state.velocities + 0*dvs1 + (-1)*dvs2 + 2*dvs3, 
+                                                   bodies_state.masses)
     drs4 *= dt; dvs4 *= dt
     drs5, dvs5 = newtonian_gravitation(t + 2/3*dt, bodies_state.positions + 7/27*drs1 + 10/27*drs2 + 0*drs3 + 1/27*drs4,
-                                                   bodies_state.velocities + 7/27*dvs1 + 10/27*dvs2 + 0*dvs3 + 1/27*dvs4, bodies_state.masses)
+                                                   bodies_state.velocities + 7/27*dvs1 + 10/27*dvs2 + 0*dvs3 + 1/27*dvs4, 
+                                                   bodies_state.masses)
     drs5 *= dt; dvs5 *= dt
     drs6, dvs6 = newtonian_gravitation(t + 1/5*dt, bodies_state.positions + 28/625*drs1 + (-1/5)*drs2 + 546/625*drs3 + 54/625*drs4 + (-378/625)*drs5,
-                                                   bodies_state.velocities + 28/625*dvs1 + (-1/5)*dvs2 + 546/625*dvs3 + 54/625*dvs4 + (-378/625)*dvs5, bodies_state.masses)
+                                                   bodies_state.velocities + 28/625*dvs1 + (-1/5)*dvs2 + 546/625*dvs3 + 54/625*dvs4 + (-378/625)*dvs5, 
+                                                   bodies_state.masses)
     drs6 *= dt; dvs6 *= dt
 
     drs = 1/24*drs1 + 0*drs2 + 0*drs3 + 5/48*drs4 + 27/56*drs5 + 125/336*drs6 
@@ -85,7 +92,7 @@ def update_bodies_fehlberg_rungekutta(bodies_state : object, dt : float) : # can
     _drse = 1/8*drs1 + 0*drs2 + 2/3*drs3 + 1/16*drs4 + (-27/56)*drs5 + (-125/336)*drs6
     _dvse = 1/8*dvs1 + 0*dvs2 + 2/3*dvs3 + 1/16*dvs4 + (-27/56)*dvs5 + (-125/336)*dvs6
 
-    tolerance = 1/1000
+    tolerance = 1/10000
 
     error = np.linalg.norm(_drse, axis=(0,1))
 

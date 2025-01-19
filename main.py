@@ -12,7 +12,7 @@ from PIL import Image
 
 # numeracy
 import numpy as np
-from integrators import update_bodies_rungekutta , update_bodies_butchers_rungekutta, update_bodies_fehlberg_rungekutta
+from integrators import update_bodies_rungekutta , update_bodies_butchers_rungekutta, update_bodies_fehlberg_rungekutta 
 from datetime import datetime
 
 # abstractions
@@ -290,9 +290,10 @@ saturn = Body(
     5.683e26,
 )
 
+
 # entities
 bodies_state = Bodies.from_bodies([sun, mercury, venus, earth, moon, mars, jupiter, hektor, ganymede, io, callisto, saturn, uranus, neptune])
-bodies_state = Bodies.from_bodies([sun, mercury, venus, earth, mars, jupiter, hektor, saturn, uranus, neptune])
+bodies_state = Bodies.from_bodies([sun, mercury, venus, earth, moon, mars, jupiter, hektor, saturn, uranus, neptune])
 bodies_state.check_csvs()
 
 skybox = Sphere(2500,15)
@@ -362,18 +363,12 @@ while not glfw.window_should_close(window):
     
     if simming :
         
-        timestep = (3.154e+7) * delta_time/(16) # delta_time = 1/fps
-        simulated_time += fehlberg_timestep # += timestep
+        simulated_time += fehlberg_timestep # += timestep for other integrators
         
         # log info for each body
-        [body.log(sim_date) for body in bodies_state.bodies]
-        
-        # check if k5 - k4 below certain value , if true repeat with 
-        # lower timestep selected 
+        [body.log(sim_date.translate({ord(','): None})) for body in bodies_state.bodies]
         
         #profiler.enable()
-        #update_bodies_rungekutta(bodies_state, timestep)
-        #update_bodies_butchers_rungekutta(bodies_state, timestep)
         fehlberg_timestep = update_bodies_fehlberg_rungekutta(bodies_state, fehlberg_timestep)
         #profiler.disable()
     
