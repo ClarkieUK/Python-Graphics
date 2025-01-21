@@ -17,11 +17,11 @@ from datetime import datetime
 
 # abstractions
 from camera import Camera
-from texture_loader import texture_load
 from shader import Shader
-from body import Body , Bodies
+from body   import Body , Bodies
 from sphere import Sphere
 from vector import *
+from deltatime import TimeManager
 
 # debugging
 import cProfile, pstats
@@ -30,16 +30,18 @@ profiler = cProfile.Profile()
 # display
 width, height = 900, 900
 
-# camera , sim
+# camera , sim , setup constants
 main_camera = Camera()
 first_mouse = True
+
 simming = False
 simming_pressed = False
-simulated_time = 0
-unix_start = 1735689600 # 1st of jan 2025, at 00:00
 fehlberg_timestep = (3.154e+7) * 1/(16 * 144)
 
-# setup constants
+G = 6.67430e-11
+AU = 1.496e11
+scale = 8 / AU
+
 WHITE = np.array([255, 255, 255])
 BLACK = np.array([0, 0, 0])
 RED = np.array([255, 0, 0])
@@ -55,21 +57,11 @@ BROWN = np.array([222, 184, 135])
 
 # facts https://nssdc.gsfc.nasa.gov/planetary/planetfact.html , https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/ , https://ssd.jpl.nasa.gov/horizons/app.html#/
 
-G = 6.67430e-11
-AU = 1.496e11
-scale = 8 / AU
-
-
 # callbacks
 def process_input_camera(window, delta_time):
 
-    if (
-        glfw.get_key(window, glfw.KEY_ESCAPE) == glfw.PRESS
-    ):  # we check to see if the escape is pressed in the context of the
-        # window, if true then we flag the closing of glfw window
-        glfw.set_window_should_close(
-            window, True
-        )  # GetKey returns either GLFW_RELEASE or glfw.PRESS
+    if (glfw.get_key(window, glfw.KEY_ESCAPE) == glfw.PRESS): 
+        glfw.set_window_should_close(window, True)  
 
     # cameraSpeed = float(5.0 * delta_time)
     if glfw.get_key(window, glfw.KEY_W) == glfw.PRESS:
@@ -292,7 +284,7 @@ saturn = Body(
 
 
 # entities
-bodies_state = Bodies.from_bodies([sun, mercury, venus, earth, moon, mars, jupiter, hektor, ganymede, io, callisto, saturn, uranus, neptune])
+#bodies_state = Bodies.from_bodies([sun, mercury, venus, earth, moon, mars, jupiter, hektor, ganymede, io, callisto, saturn, uranus, neptune])
 bodies_state = Bodies.from_bodies([sun, mercury, venus, earth, moon, mars, jupiter, hektor, saturn, uranus, neptune])
 bodies_state.check_csvs()
 
@@ -302,40 +294,21 @@ skybox = Sphere(2500,15)
 glEnable(GL_DEPTH_TEST)
 glEnable(GL_BLEND)
 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-#glClearColor(0, 0.1, 0.1, 1)
 glClearColor(0, 0, 0, 1)
-glfw.swap_interval(0)
-
-# delta_time
-last_frame = 0.0
-anchor_time = 0.0
-frame_count = 0
+glfw.swap_interval(0)  # uncap fps
 
 # event loop
 while not glfw.window_should_close(window):
 
     # delta time
-    current_frame_time = glfw.get_time()
-    delta_time = current_frame_time - last_frame
-    last_frame = current_frame_time
-    frame_count += 1
-    sim_date = datetime.fromtimestamp(unix_start+simulated_time).strftime("%A, %B %d, %Y %H:%M:%S")
+    delta_time = TimeManager.calculate_deltatime(glfw.get_time())
+    TimeManager.update_sim_date()
 
     # set window title as framerate
     glfw.set_window_title(window, str(1/delta_time))
 
-    if (current_frame_time - anchor_time) >= 1.0:
-        
-        print("Avg. FPS :", frame_count)
-        print("Simulated Time :", f"{simulated_time/3.154e+7:.5f}" , 'yr')
-        print(sim_date)
-        print('\n')
-        
-        frame_count = 0
-        anchor_time = current_frame_time
-    elif current_frame_time > 10.0:
-        #glfw.set_window_should_close(window, True)
-        pass
+    # do stuff per 1 second
+    TimeManager.update_average_framerate(glfw.get_time())
 
     # key presses
     process_input_camera(window, delta_time)
@@ -363,18 +336,18 @@ while not glfw.window_should_close(window):
     
     if simming :
         
-        simulated_time += fehlberg_timestep # += timestep for other integrators
-        
         # log info for each body
-        [body.log(sim_date.translate({ord(','): None})) for body in bodies_state.bodies]
+        [body.log(TimeManager.sim_date.translate({ord(','): None})) for body in bodies_state.bodies]
         
         #profiler.enable()
         fehlberg_timestep = update_bodies_fehlberg_rungekutta(bodies_state, fehlberg_timestep)
         #profiler.disable()
+        
+        TimeManager.simulated_time += fehlberg_timestep
     
     # begin drawing
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-    
+
     for body in bodies_state:
         body.draw(sphere_shader, scale)
         body.draw_orbit(orbits_shader, scale)
