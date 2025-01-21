@@ -4,6 +4,7 @@ layout(location = 0) in vec3 a_position;
 
 uniform mat4 view;
 uniform mat4 projection;
+uniform float iTime;
 
 void main()
 {

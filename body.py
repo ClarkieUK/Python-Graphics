@@ -49,27 +49,29 @@ class Body:
         self.file = open(os.path.join('simulation_results', self.ID+'.csv'), 'a', newline='') 
         self.writer = csv.writer(self.file)
 
-    def draw(self, shader, scale):
+    def draw(self, shader, scale, simming):
         # drawing the body consists of just drawing the sphere
         # mesh at the bodies position
         self.mesh.draw(shader, self.position, scale)
         
-        # pass position to an array for drawing the trail
-        self.orbit_points[self.orbit_index] = [
-            self.position[0] * scale,
-            self.position[2] * scale,
-            self.position[1] * scale,
-        ]
+        if simming : 
+            # pass position to an array for drawing the trail
+            self.orbit_points[self.orbit_index] = [
+                self.position[0] * scale,
+                self.position[2] * scale,
+                self.position[1] * scale,
+            ]
 
-        # cycle over the 500 index points in a circular fashion
-        self.orbit_index = (self.orbit_index + 1) % self.max_orbit_points
+            # cycle over the 500 index points in a circular fashion
+            self.orbit_index = (self.orbit_index + 1) % self.max_orbit_points
 
-    def draw_orbit(self, shader, scale):
+    def draw_orbit(self, shader : Shader, scale):
         # each planet (body), has a trail , the sphere mesh doesnt. That is why
         # this method is located in the body class, doesn't require scale
         # as information passed has already been scaled.
 
         shader.use()
+        shader.setVec3('bodyColor',self.color)
         # bind buffer then bind and send data
         glBindBuffer(GL_ARRAY_BUFFER, self.VBO)
 

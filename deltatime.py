@@ -42,4 +42,4 @@ class TimeManager() :
             
     @classmethod
     def update_sim_date(cls) :
-        cls.sim_date = datetime.fromtimestamp(cls.unix_start+cls.simulated_time).strftime("%A, %B %d, %Y %H:%M:%S")
+        cls.sim_date = datetime.fromtimestamp(cls.unix_start+float(cls.simulated_time)).strftime("%A, %B %d, %Y %H:%M:%S")
