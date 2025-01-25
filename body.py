@@ -117,6 +117,7 @@ class Bodies(MutableSequence):
         self.positions = positions
         self.velocities = velocities
         self.masses = masses
+        self.body_map = {body.ID: body for body in bodies}
 
     @classmethod
     def from_bodies(cls, bodies: list[Body]) -> 'Bodies':
@@ -151,6 +152,9 @@ class Bodies(MutableSequence):
     def insert() -> None :
         pass
     
+    def get_target(self, target_id) -> Body :
+        return self.body_map.get(target_id)
+        
     def check_csvs(self) -> None :
         for body in self.bodies :
             with open(os.path.join('simulation_results', body.ID+'.csv'), 'w', newline='') as f:

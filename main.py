@@ -14,7 +14,6 @@ from PIL import Image
 import numpy as np
 from integrators import update_bodies_rungekutta , update_bodies_butchers_rungekutta, update_bodies_fehlberg_rungekutta 
 from datetime import datetime
-from transferorbit import * 
 
 # abstractions
 from camera import Camera
@@ -23,6 +22,7 @@ from body   import Body , Bodies
 from sphere import Sphere
 from vector import *
 from deltatime import TimeManager
+from hohmannorbit import * 
 
 # debugging
 import cProfile, pstats
@@ -37,6 +37,10 @@ first_mouse = True
 
 simming = False
 simming_pressed = False
+
+launch = False
+launch_pressed = False
+
 fehlberg_timestep = (3.154e+7) * 1/(16 * 144)
 
 G = 6.67430e-11
@@ -94,6 +98,18 @@ def process_input_sim(window, delta_time, simming, simming_pressed) :
         simming_pressed = False
         
     return simming, simming_pressed
+
+def process_input_launch(window, launch, launch_pressed) :
+
+    if glfw.get_key(window, glfw.KEY_L) == glfw.PRESS :
+        if not launch_pressed :
+            launch = not launch 
+            launch_pressed = True
+            
+    if glfw.get_key(window, glfw.KEY_L) == glfw.RELEASE :
+        launch_pressed = False
+        
+    return launch, launch_pressed
             
 def process_input_scale(window, scale) :
     if glfw.get_key(window, glfw.KEY_UP) == glfw.PRESS :
@@ -170,7 +186,7 @@ sun = Body(
 earth = Body(
     'EARTH',
     LIGHT_BLUE,
-    0.05,
+    0.25,
     np.array([-2.758794880287251E+07, 1.439239583084676E+08, 1.921064327326417E+04],dtype=np.longdouble) * 1e3,
     np.array([-2.977686364628585E+01, -5.535813340802556E+00, -1.943387942073826E-04],dtype=np.longdouble) * 1e3,
     5.9742e24,
@@ -252,7 +268,7 @@ venus = Body(
 mars = Body(
     'MARS',
     RED,
-    0.05,
+    0.25,
     np.array([-7.890038131682467E+07, 2.274372361241295E+08, 6.722196400986686E+06],dtype=np.longdouble) * 1e3,
     np.array([-2.199759485544059E+01, -5.787405095467102E+00, 4.184257990348734E-01],dtype=np.longdouble) * 1e3,
     6.39e23,
@@ -339,26 +355,10 @@ adonis = Body(
     0.13e12,
 )
 
-v1 = v1(1.3271244e20,np.linalg.norm(earth.position),np.linalg.norm(mars.position))
-v2 = v2(1.3271244e20,np.linalg.norm(earth.position),np.linalg.norm(mars.position))
-dirv = earth.velocity/np.linalg.norm(earth.velocity) 
-sat_t = t(1.3271244e20,np.linalg.norm(earth.position),np.linalg.norm(mars.position))
-done = False
-
-satellite = Body(
-    'SATELLITE',
-    WHITE,
-    0.05,
-    earth.position,
-    earth.velocity + v1 * dirv,
-    3e3,
-)
-
 # entities
 #bodies_state = Bodies.from_bodies([sun, mercury, venus, earth, moon, mars, jupiter, hektor, ganymede, io, callisto, saturn, uranus, neptune])
-bodies_state = Bodies.from_bodies([sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune,apophis,phaethon,halley,cruithne,adonis])
-bodies_state = Bodies.from_bodies([sun,satellite])
-art_state = Bodies.from_bodies([sun,earth,mars])
+#bodies_state = Bodies.from_bodies(np.array([sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune, apophis, phaethon, halley, cruithne, adonis]))
+bodies_state = Bodies.from_bodies(np.array([sun,earth,mars]))
 bodies_state.check_csvs()
 
 skybox = Sphere(2500,15)
@@ -369,6 +369,8 @@ glEnable(GL_BLEND)
 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 glClearColor(0, 0, 0, 1)
 glfw.swap_interval(0)  # uncap fps
+
+hohmann = Hohmann('EARTH','MARS')
 
 # event loop
 while not glfw.window_should_close(window):
@@ -410,34 +412,40 @@ while not glfw.window_should_close(window):
     
     if simming :
           
+        launch, launch_pressed = process_input_launch(window, launch, launch_pressed)
+        
+        if launch :
+            hohmann = Hohmann('EARTH','MARS')
+            hohmann.launch(bodies_state)
+            launch = False
+          
         # log info for each body
         [body.log(TimeManager.sim_date.translate({ord(','): None})) for body in bodies_state.bodies]
-        
-        dirv = mars.velocity/np.linalg.norm(mars.velocity)  
-        if TimeManager.simulated_time >= sat_t and not done :
-            bodies_state.update('velocities',-1,satellite.velocity + v2*1.05*dirv)
-            print('done')
-            done = True
             
         #profiler.enable()
         fehlberg_timestep = update_bodies_fehlberg_rungekutta(bodies_state, fehlberg_timestep)
-        fehlberg_timestep = update_bodies_fehlberg_rungekutta(art_state, fehlberg_timestep)
         #profiler.disable()
+        
+        if hohmann.Satellite != None :
+            _ = update_bodies_fehlberg_rungekutta(hohmann.bodies_state, fehlberg_timestep)
+            hohmann.launch_time += fehlberg_timestep
+            hohmann.check(bodies_state, TimeManager.simulated_time)
         
         TimeManager.simulated_time += fehlberg_timestep
     
     # begin drawing
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-
+    
     for body in bodies_state:
         body.draw(sphere_shader, scale, simming)
         body.draw_orbit(orbits_shader, scale)
         
-    for body in art_state :
-        body.draw(sphere_shader, scale, simming)
-        body.draw_orbit(orbits_shader, scale)
+    if hohmann.Satellite != None :
+        for body in hohmann.bodies_state :
+            body.draw(sphere_shader, scale, simming)
+            body.draw_orbit(orbits_shader, scale)
         
-    skybox.draw(skybox_shader,np.array([0.0,0.0,0.0]),1)
+    #skybox.draw(skybox_shader,np.array([0.0,0.0,0.0]),1)
 
     # swap back and front pages
     glfw.poll_events()
