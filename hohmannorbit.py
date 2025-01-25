@@ -52,8 +52,6 @@ class Hohmann() :
         
         self.optimal = pi - (1.3271244e20/np.linalg.norm(target_pos)**3)**(1/2) * self.transfer_time
         
-        print(self.optimal * 180/pi)
-        
     def check(self, state : Bodies, simulated_time) :
 
         launch_targetp = state.get_target(self.launch_target).position
