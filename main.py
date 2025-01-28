@@ -370,8 +370,7 @@ glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 glClearColor(0, 0, 0, 1)
 glfw.swap_interval(0)  # uncap fps
 
-hohmann = Hohmann('EARTH','MARS')
-
+satellite = Hohmann('EARTH','MARS')
 # event loop
 while not glfw.window_should_close(window):
 
@@ -415,8 +414,11 @@ while not glfw.window_should_close(window):
         launch, launch_pressed = process_input_launch(window, launch, launch_pressed)
         
         if launch :
-            hohmann = Hohmann('EARTH','MARS')
-            hohmann.launch(bodies_state)
+            
+            satellite = Hohmann('EARTH','MARS')
+
+            satellite.launch(bodies_state)
+
             launch = False
           
         # log info for each body
@@ -426,10 +428,10 @@ while not glfw.window_should_close(window):
         fehlberg_timestep = update_bodies_fehlberg_rungekutta(bodies_state, fehlberg_timestep)
         #profiler.disable()
         
-        if hohmann.Satellite != None :
-            _ = update_bodies_fehlberg_rungekutta(hohmann.bodies_state, fehlberg_timestep)
-            hohmann.launch_time += fehlberg_timestep
-            hohmann.check(bodies_state, TimeManager.simulated_time)
+        if satellite.satellite != None :
+            _ = update_bodies_fehlberg_rungekutta(satellite.bodies_state, fehlberg_timestep)
+            satellite.mission_time += fehlberg_timestep
+            satellite.update(bodies_state)
         
         TimeManager.simulated_time += fehlberg_timestep
     
@@ -440,11 +442,11 @@ while not glfw.window_should_close(window):
         body.draw(sphere_shader, scale, simming)
         body.draw_orbit(orbits_shader, scale)
         
-    if hohmann.Satellite != None :
-        for body in hohmann.bodies_state :
+    if satellite.satellite != None :
+        for body in satellite.bodies_state:
             body.draw(sphere_shader, scale, simming)
             body.draw_orbit(orbits_shader, scale)
-        
+    
     #skybox.draw(skybox_shader,np.array([0.0,0.0,0.0]),1)
 
     # swap back and front pages
