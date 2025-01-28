@@ -108,7 +108,7 @@ class Sphere:
         # z in and out of the screen, apply xyz -> xzy and scaling transformation
         # the recently attached transformation is applied FIRST, so we attach rotation last
         model = glm.mat4(1.0)   
-        model = glm.translate(model, glm.vec3(position[0]*scale,position[2]*scale,position[1]*scale))
+        model = glm.translate(model, glm.vec3(-position[0]*scale,-position[2]*scale,position[1]*scale))
         
         #model = glm.rotate(model, glm.radians(time) * 15, glm.vec3(0.0, 1.0, 0.0)) # potentially modify speed based on body attribute?
         shader.setMat4('model',model) 
