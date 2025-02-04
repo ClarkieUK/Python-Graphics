@@ -28,14 +28,12 @@ class Hohmann() :
         target_pos = target_body.position
         target_vel = target_body.velocity
         
-        self.v1 = self.v1(np.linalg.norm(launch_pos),np.linalg.norm(target_pos))
-        self.v2 = self.v2(np.linalg.norm(launch_pos),np.linalg.norm(target_pos))
+        self.v1 = 2938.294603906249#self.v1(np.linalg.norm(launch_pos),np.linalg.norm(target_pos))
+        self.v2 = 2643.712689013453 #self.v2(np.linalg.norm(launch_pos),np.linalg.norm(target_pos))
         
         self.transfer_time = self.calculate_transfer_time(np.linalg.norm(launch_pos),np.linalg.norm(target_pos)) 
         
         self.required_alignment = (pi - (self.mu/(np.linalg.norm(target_pos))**3)**(1/2) * self.transfer_time) * 180/pi
-        
-        print(self.required_alignment)
         
         self.satellite = Body('SATELLITE',
                               np.array([255,255,255]),
@@ -46,11 +44,22 @@ class Hohmann() :
         
         self.bodies_state = Bodies.from_bodies([current_state.get_target('SUN'),self.satellite]) 
         
+        self.dir = np.cross(launch_body.position,np.cross(target_body.velocity,target_body.position))
+        self.dir = self.dir/np.linalg.norm(self.dir)
+        
+        
     def update(self, current_state : Bodies) :
+        """
         if self.mission_time >= self.transfer_time and self.slow_down_burn == False :
 
             _v = self.bodies_state.get_target('SATELLITE').velocity
         
+            self.bodies_state.update('velocities',-1,_v + self.v2 * _v/np.linalg.norm(_v))
+            self.slow_down_burn = True
+        """
+        if self.slow_down_burn == False : 
+            _v = self.bodies_state.get_target('SATELLITE').velocity
+            
             self.bodies_state.update('velocities',-1,_v + self.v2 * _v/np.linalg.norm(_v))
             self.slow_down_burn = True
             

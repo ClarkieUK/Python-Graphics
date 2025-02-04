@@ -386,8 +386,9 @@ test_mars = Body(
 # entities
 #bodies_state = Bodies.from_bodies([sun, mercury, venus, earth, moon, mars, jupiter, hektor, ganymede, io, callisto, saturn, uranus, neptune])
 #bodies_state = Bodies.from_bodies(np.array([sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune, apophis, phaethon, halley, cruithne, adonis]))
-bodies_state = Bodies.from_bodies(np.array([test_sun,test_earth,test_mars]))
-bodies_state.check_csvs()
+bodies_state = Bodies.from_bodies(np.array([sun,earth,mars]))
+#bodies_state = Bodies.from_bodies(np.array([test_sun,test_earth,test_mars]))
+#bodies_state.check_csvs()
 
 skybox = Sphere(2500,15)
 
@@ -398,7 +399,7 @@ glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 glClearColor(0, 0, 0, 1)
 glfw.swap_interval(0)  # uncap fps
 
-satellite = Hohmann('TEST_EARTH','TEST_MARS')
+satellite = Hohmann('EARTH','MARS')
 # event loop
 while not glfw.window_should_close(window):
 
@@ -439,27 +440,27 @@ while not glfw.window_should_close(window):
     
     if simming :
         launch, launch_pressed = process_input_launch(window, launch, launch_pressed)
+        print(np.linalg.norm(bodies_state.get_target('EARTH').velocity))
         satellite.update_angular_seperation(bodies_state)
         satellite.update_required_alignment(bodies_state)
         
-        
-        if satellite.been_launched == False and satellite.angular_seperation >= satellite.required_alignment-0.2 and  satellite.angular_seperation <= satellite.required_alignment + 0.2:
-            #satellite = Hohmann('TEST_EARTH','TEST_MARS')
-            satellite.launch(bodies_state)
-            satellite.been_launched = True
-        
         if launch :
-            satellite = Hohmann('TEST_EARTH','TEST_MARS')
-            
+            satellite = Hohmann('EARTH','MARS')
+            satellite.launch(bodies_state)
             launch = False
-          
+        """  
         # log info for each body
-        [body.log(TimeManager.sim_date.translate({ord(','): None})) for body in bodies_state.bodies]
-            
+        #[body.log(TimeManager.sim_date.translate({ord(','): None})) for body in bodies_state.bodies]
+           
+        """    
         if satellite.satellite != None :
             _ = update_bodies_fehlberg_rungekutta(satellite.bodies_state, fehlberg_timestep)
             satellite.mission_time += fehlberg_timestep
-            satellite.update(bodies_state)
+            
+            #satellite.update(bodies_state)
+            if glfw.get_key(window, glfw.KEY_B) == glfw.PRESS :
+                satellite.update(bodies_state)
+        
         
         #profiler.enable()
         fehlberg_timestep = update_bodies_fehlberg_rungekutta(bodies_state, fehlberg_timestep)
@@ -474,6 +475,7 @@ while not glfw.window_should_close(window):
         body.draw(sphere_shader, scale, simming)
         body.draw_orbit(orbits_shader, scale)
         
+    
     if satellite.satellite != None :
         for body in satellite.bodies_state:
             body.draw(sphere_shader, scale, simming)
