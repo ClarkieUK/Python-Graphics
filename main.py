@@ -385,7 +385,7 @@ test_mars = Body(
 )
 # entities
 #bodies_state = Bodies.from_bodies([sun, mercury, venus, earth, moon, mars, jupiter, hektor, ganymede, io, callisto, saturn, uranus, neptune])
-#bodies_state = Bodies.from_bodies(np.array([sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune, apophis, phaethon, halley, cruithne, adonis]))
+#bodies_state = Bodies.from_bodies(np.array([sun, mercury, venus, earth, moon, mars, jupiter, saturn, uranus, neptune, apophis, phaethon, halley, cruithne, adonis]))
 bodies_state = Bodies.from_bodies(np.array([sun,earth,mars]))
 #bodies_state = Bodies.from_bodies(np.array([test_sun,test_earth,test_mars]))
 #bodies_state.check_csvs()
@@ -440,9 +440,10 @@ while not glfw.window_should_close(window):
     
     if simming :
         launch, launch_pressed = process_input_launch(window, launch, launch_pressed)
-        print(np.linalg.norm(bodies_state.get_target('EARTH').velocity))
         satellite.update_angular_seperation(bodies_state)
         satellite.update_required_alignment(bodies_state)
+        
+        print(np.linalg.norm(bodies_state.get_target('EARTH').velocity))
         
         if launch :
             satellite = Hohmann('EARTH','MARS')
@@ -474,7 +475,6 @@ while not glfw.window_should_close(window):
     for body in bodies_state:
         body.draw(sphere_shader, scale, simming)
         body.draw_orbit(orbits_shader, scale)
-        
     
     if satellite.satellite != None :
         for body in satellite.bodies_state:

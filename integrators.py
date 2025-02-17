@@ -83,7 +83,7 @@ def update_bodies_fehlberg_rungekutta(bodies_state : object, dt : float) -> floa
     _drse = 1/8*drs1 + 0*drs2 + 2/3*drs3 + 1/16*drs4 + (-27/56)*drs5 + (-125/336)*drs6
     _dvse = 1/8*dvs1 + 0*dvs2 + 2/3*dvs3 + 1/16*dvs4 + (-27/56)*dvs5 + (-125/336)*dvs6
 
-    tolerance = 1e-2
+    tolerance = 1e-3
 
     error = np.linalg.norm(_drse, axis=(0,1))
 

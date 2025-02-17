@@ -28,7 +28,7 @@ class Hohmann() :
         target_pos = target_body.position
         target_vel = target_body.velocity
         
-        self.v1 = 2938.294603906249#self.v1(np.linalg.norm(launch_pos),np.linalg.norm(target_pos))
+        self.v1 = 2938.294603906249 #self.v1(np.linalg.norm(launch_pos),np.linalg.norm(target_pos))
         self.v2 = 2643.712689013453 #self.v2(np.linalg.norm(launch_pos),np.linalg.norm(target_pos))
         
         self.transfer_time = self.calculate_transfer_time(np.linalg.norm(launch_pos),np.linalg.norm(target_pos)) 
@@ -42,7 +42,14 @@ class Hohmann() :
                               launch_vel + self.v1 * launch_vel/np.linalg.norm(launch_vel),
                               3e3)
         
-        self.bodies_state = Bodies.from_bodies([current_state.get_target('SUN'),self.satellite]) 
+        self.sun = Body('STANDIN_SUN',
+                              current_state.get_target('SUN').color,
+                              current_state.get_target('SUN').radius,
+                              current_state.get_target('SUN').position,
+                              current_state.get_target('SUN').velocity,
+                              current_state.get_target('SUN').mass)
+        
+        self.bodies_state = Bodies.from_bodies([self.sun,self.satellite]) 
         
         self.dir = np.cross(launch_body.position,np.cross(target_body.velocity,target_body.position))
         self.dir = self.dir/np.linalg.norm(self.dir)
@@ -62,25 +69,6 @@ class Hohmann() :
             
             self.bodies_state.update('velocities',-1,_v + self.v2 * _v/np.linalg.norm(_v))
             self.slow_down_burn = True
-            
-    def update_angular_seperation(self, current_state : Bodies) :
-        launch_body = current_state.get_target(self.launch_location)
-        launch_pos = launch_body.position
-        
-        target_body = current_state.get_target(self.launch_target)
-        target_pos = target_body.position        
-
-        self.angular_seperation = self.signed_angle(launch_pos, target_pos, np.array([0,0,1])) * 180/pi
-        
-        
-    def update_required_alignment(self, current_state : Bodies) :     
-        target_body = current_state.get_target(self.launch_target)
-        target_pos = target_body.position
-        
-        launch_body = current_state.get_target(self.launch_location)
-        launch_pos = launch_body.position
-        
-        self.required_alignment = (pi - (self.mu/(np.linalg.norm(target_pos))**3)**(1/2) * self.calculate_transfer_time(np.linalg.norm(launch_pos),np.linalg.norm(target_pos)) ) * 180/pi
         
     def v1(self, r1, r2) :
         return (self.mu/r1)**(1/2) * (((2*r2)/(r1+r2))**(1/2)-1)
@@ -90,6 +78,24 @@ class Hohmann() :
     
     def calculate_transfer_time(self, r1, r2) :
         return pi * ((r1+r2)**3/(8*self.mu))**(1/2)
+
+    def update_required_alignment(self, current_state : Bodies) :     
+        target_body = current_state.get_target(self.launch_target)
+        target_pos = target_body.position
+        
+        launch_body = current_state.get_target(self.launch_location)
+        launch_pos = launch_body.position
+        
+        self.required_alignment = (pi - (self.mu/(np.linalg.norm(target_pos))**3)**(1/2) * self.calculate_transfer_time(np.linalg.norm(launch_pos),np.linalg.norm(target_pos)) ) * 180/pi
+
+    def update_angular_seperation(self, current_state : Bodies) :
+        launch_body = current_state.get_target(self.launch_location)
+        launch_pos = launch_body.position
+        
+        target_body = current_state.get_target(self.launch_target)
+        target_pos = target_body.position        
+
+        self.angular_seperation = self.signed_angle(launch_pos, target_pos, np.array([0,0,1])) * 180/pi
     
     def signed_angle(self, v1, v2, n):
         # Normalize vectors

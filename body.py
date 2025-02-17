@@ -58,7 +58,7 @@ class Body:
             # pass position to an array for drawing the trail
             self.orbit_points[self.orbit_index] = [
                 -self.position[0] * scale,
-                -self.position[2] * scale,
+                self.position[2] * scale,
                 self.position[1] * scale,
             ]
 
