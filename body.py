@@ -145,12 +145,17 @@ class Bodies(MutableSequence):
     
     def __delitem__(self, index) -> None :
         del self.bodies[index]
+        del self.body_map[self.bodies[index].ID]
         self.positions = np.delete(self.positions, index, axis=0)
         self.velocities = np.delete(self.velocities, index, axis=0)
         self.masses = np.delete(self.masses, index, axis=0)
     
-    def insert() -> None :
-        pass
+    def insert(self, body : Body) -> None :
+        self.bodies = np.append(self.bodies, body)
+        self.body_map[body.ID] = body
+        self.positions = np.append(self.positions, [body.position], axis=0)
+        self.velocities = np.append(self.velocities, [body.velocity], axis=0)
+        self.masses = np.append(self.masses, [body.mass], axis=0)
     
     def get_target(self, target_id) -> Body :
         return self.body_map.get(target_id)

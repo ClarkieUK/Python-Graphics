@@ -385,10 +385,10 @@ test_mars = Body(
 )
 # entities
 #bodies_state = Bodies.from_bodies([sun, mercury, venus, earth, moon, mars, jupiter, hektor, ganymede, io, callisto, saturn, uranus, neptune])
-#bodies_state = Bodies.from_bodies(np.array([sun, mercury, venus, earth, moon, mars, jupiter, saturn, uranus, neptune, apophis, phaethon, halley, cruithne, adonis]))
+#bodies_state = Bodies.from_bodies(np.array([sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune, apophis, phaethon, halley, cruithne, adonis]))
 bodies_state = Bodies.from_bodies(np.array([sun,earth,mars]))
 #bodies_state = Bodies.from_bodies(np.array([test_sun,test_earth,test_mars]))
-#bodies_state.check_csvs()
+bodies_state.check_csvs()
 
 skybox = Sphere(2500,15)
 
@@ -440,32 +440,33 @@ while not glfw.window_should_close(window):
     
     if simming :
         launch, launch_pressed = process_input_launch(window, launch, launch_pressed)
-        satellite.update_angular_seperation(bodies_state)
-        satellite.update_required_alignment(bodies_state)
         
-        print(np.linalg.norm(bodies_state.get_target('EARTH').velocity))
-        
-        if launch :
+        if launch : #np.linalg.norm(bodies_state.get_target('EARTH').velocity) > 30280 and launch:
+        #if launch :
             satellite = Hohmann('EARTH','MARS')
             satellite.launch(bodies_state)
+            satellite.plane_delta()
+            satellite.bodies_state.check_csvs()
             launch = False
-        """  
-        # log info for each body
-        #[body.log(TimeManager.sim_date.translate({ord(','): None})) for body in bodies_state.bodies]
-           
-        """    
+
+        [body.log(TimeManager.sim_date.translate({ord(','): None})) for body in bodies_state.bodies]
+ 
         if satellite.satellite != None :
+            
             _ = update_bodies_fehlberg_rungekutta(satellite.bodies_state, fehlberg_timestep)
+            
             satellite.mission_time += fehlberg_timestep
             
-            #satellite.update(bodies_state)
             if glfw.get_key(window, glfw.KEY_B) == glfw.PRESS :
-                satellite.update(bodies_state)
+                satellite.boost()
+                
+            if glfw.get_key(window, glfw.KEY_P) == glfw.PRESS :
+                satellite.plane_change()    
+                
+            if glfw.get_key(window, glfw.KEY_O) == glfw.PRESS :
+                satellite.plane_realign()   
         
-        
-        #profiler.enable()
         fehlberg_timestep = update_bodies_fehlberg_rungekutta(bodies_state, fehlberg_timestep)
-        #profiler.disable()
         
         TimeManager.simulated_time += fehlberg_timestep
     
