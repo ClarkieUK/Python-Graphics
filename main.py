@@ -407,6 +407,8 @@ while not glfw.window_should_close(window):
     delta_time = TimeManager.calculate_deltatime(glfw.get_time())
     TimeManager.update_sim_date()
 
+    print(np.linalg.norm(bodies_state.get_target('EARTH').velocity))
+
     # set window title as framerate
     glfw.set_window_title(window, str(1/delta_time))
 

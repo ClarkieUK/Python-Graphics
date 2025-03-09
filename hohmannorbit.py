@@ -152,4 +152,10 @@ class Hohmann() :
         _e = self.eccentricity_vector()
         _n = earth_info['ascending_node'] 
         
+        _en = np.linalg.norm(_e)
+        _nn = np.linalg.norm(_n)
+        
+        return 2 * np.arctan2(np.linalg.norm(_en*_n-_nn*_e),
+                              np.linalg.norm(_en*_n+_nn*_e))
+        
         return np.arccos(np.dot(_n,_e)/(np.linalg.norm(_n)*np.linalg.norm(_e)))
