@@ -7,6 +7,7 @@ from datetime import datetime
 import bisect
 import numpy as np
 from poliastro.core.iod import vallado
+from lamberthub import izzo2015
 
 def lambert(host : str, target : str, t0 : float, r0 : np.array, desired_mission_duration : int) -> dict :
 
@@ -24,16 +25,17 @@ def lambert(host : str, target : str, t0 : float, r0 : np.array, desired_mission
     data_target = _data_target - _sun
     data_v_target = _data_v_target - _sun_v
 
-    info = get_dt(t0, dates_target, data_target, data_v_target, desired_mission_duration)
+    info = get_dt(t0, host, target, dates_target, data_target, data_v_target, desired_mission_duration)
 
-    r = info['MARS_LOC_LOWER']
+    r = info[f'{target}_LOC_LOWER']
     corrected_duration = info['LOWER_DT']
     
     v_i,v_f = izzo(Sun.k,r0,r,corrected_duration,0,True,True,100,1e-6)
+    v_i,v_f = izzo2015(Sun.k,r0,r,corrected_duration,0,True,True,35,0.00001,1e-6)
         
-    return v_i, info['MARS_VEL_LOWER'], corrected_duration
+    return v_i, info[f'{target}_VEL_LOWER'], corrected_duration
 
-def get_dt(t0 : float, target_dates : np.array, target_trace : np.array, target_velocity_trace : np.array, mission_duration : float)  :
+def get_dt(t0 : float, host : str, target :str, target_dates : np.array, target_trace : np.array, target_velocity_trace : np.array, mission_duration : float)  :
     """get_dt _summary_
 
     _extended_summary_
@@ -51,7 +53,8 @@ def get_dt(t0 : float, target_dates : np.array, target_trace : np.array, target_
     """
     
     periods = {
-        "MARS" : 686.980 *24*60*60
+        "MARS" : 686.980 *24*60*60,
+        "EARTH" : 365 *24*60*60
     }
     
     # convert to unix timestamps
@@ -64,7 +67,7 @@ def get_dt(t0 : float, target_dates : np.array, target_trace : np.array, target_
     t_target = t0 + delta_t
 
     # correct
-    orbit_time = periods['MARS']
+    orbit_time = periods[f'{target}']
     
     while t_target > timestamps[-1]:  # If t_target is beyond available data
         t_target -= orbit_time  # Move back by one full Mars year
@@ -88,10 +91,10 @@ def get_dt(t0 : float, target_dates : np.array, target_trace : np.array, target_
     #print("Ceiled Time:", t_ceil_dt)
 
     return {
-        "MARS_LOC_LOWER" : target_trace[max(0, idx - 1)] if idx > 0 else timestamps[0],
-        "MARS_LOC_UPPER" : target_trace[min(idx, len(timestamps) - 1)],
-        "MARS_VEL_LOWER" : target_velocity_trace[max(0, idx - 1)] if idx > 0 else timestamps[0],
-        "MARS_VEL_UPPER" : target_velocity_trace[min(idx, len(timestamps) - 1)],
+        f"{target}_LOC_LOWER" : target_trace[max(0, idx - 1)] if idx > 0 else timestamps[0],
+        f"{target}_LOC_UPPER" : target_trace[min(idx, len(timestamps) - 1)],
+        f"{target}_VEL_LOWER" : target_velocity_trace[max(0, idx - 1)] if idx > 0 else timestamps[0],
+        f"{target}_VEL_UPPER" : target_velocity_trace[min(idx, len(timestamps) - 1)],
         "LOWER_DT" : t_floor-t0,
         "UPPER_DT" : t_ceil-t0,
         "LOWER_TIME" : t_floor_dt,

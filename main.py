@@ -430,10 +430,10 @@ while not glfw.window_should_close(window):
         if satellite_exists :
             
             if satellite.mission_time >= satellite.t :
-                #satellite.second_impulse()
+                satellite.second_impulse()
                 
-                [body.file.close() for body in bodies_state.bodies]
-                glfw.terminate()
+                #[body.file.close() for body in bodies_state.bodies]
+                #glfw.terminate()
 
             satellite.satellite.log(TimeManager.sim_date.translate({ord(','): None}))
             
