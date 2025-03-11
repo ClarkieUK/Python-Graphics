@@ -34,7 +34,7 @@ def properties(target : str) -> dict :
     axs.plot([0,data[loc_max][0]],[0,data[loc_max][1]],[0,data[loc_max][2]],color='black')
     axs.plot([0,ascending_node[0]],[0,ascending_node[1]],[0,ascending_node[2]],color='purple')
     axs.set(title=f'{target}')
-    plt.show()
+    #plt.show()
     
     
     # numerically find extrema of ellipse and corresponding velocities
@@ -153,7 +153,3 @@ i = 1.85004 * np.pi/180
 
 num = 2*np.sin(i/2)*(1+e*np.cos(fs))*(n*a) 
 de = (1-e**2)**(1/2)*np.cos(ws+fs)
-
-test = num/de
-
-print(test)

@@ -12,7 +12,7 @@ from PIL import Image
 
 # numeracy
 import numpy as np
-from integrators import update_bodies_rungekutta , update_bodies_butchers_rungekutta, update_bodies_fehlberg_rungekutta 
+from integrators import update_bodies_rungekutta , update_bodies_butchers_rungekutta, update_bodies_fehlberg_rungekutta, update_bodies_fixed_fehlberg_rungekutta 
 from datetime import datetime
 
 # abstractions
@@ -20,9 +20,8 @@ from camera import Camera
 from shader import Shader
 from body   import Body , Bodies
 from sphere import Sphere
-from vector import *
 from deltatime import TimeManager
-from hohmannorbit import * 
+from transferorbit import * 
 
 # debugging
 import cProfile, pstats
@@ -40,6 +39,7 @@ simming_pressed = False
 
 launch = False
 launch_pressed = False
+satellite_exists = False
 
 fehlberg_timestep = (3.154e+7) * 1/(16 * 144)
 
@@ -355,42 +355,13 @@ adonis = Body(
     0.13e12,
 )
 
-######
+skybox = Sphere(2500,15)
 
-test_sun = Body(
-    'SUN',
-    YELLOW,
-    2,
-    np.array([0,0,0],dtype=np.longdouble) * 1e3,
-    np.array([0,0,0],dtype=np.longdouble) * 1e3,
-    1.98892e30,
-)
-
-test_earth = Body(
-    'TEST_EARTH',
-    LIGHT_BLUE,
-    0.25,
-    np.array([1.496e+8,0,0],dtype=np.longdouble) * 1e3,
-    np.array([0,29.778,0],dtype=np.longdouble) * 1e3,
-    5.9742e24
-)
-
-test_mars = Body(
-    'TEST_MARS',
-    RED,
-    0.25,
-    np.array([0,2*1.496e+8,0],dtype=np.longdouble) * 1e3,
-    np.array([-21.056,0,0],dtype=np.longdouble) * 1e3,
-    6.39e23,
-)
 # entities
 #bodies_state = Bodies.from_bodies([sun, mercury, venus, earth, moon, mars, jupiter, hektor, ganymede, io, callisto, saturn, uranus, neptune])
 #bodies_state = Bodies.from_bodies(np.array([sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune, apophis, phaethon, halley, cruithne, adonis]))
 bodies_state = Bodies.from_bodies(np.array([sun,earth,mars]))
-#bodies_state = Bodies.from_bodies(np.array([test_sun,test_earth,test_mars]))
 bodies_state.check_csvs()
-
-skybox = Sphere(2500,15)
 
 # opengl / glfw settings
 glEnable(GL_DEPTH_TEST)
@@ -399,7 +370,6 @@ glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 glClearColor(0, 0, 0, 1)
 glfw.swap_interval(0)  # uncap fps
 
-satellite = Hohmann('EARTH','MARS')
 # event loop
 while not glfw.window_should_close(window):
 
@@ -407,7 +377,7 @@ while not glfw.window_should_close(window):
     delta_time = TimeManager.calculate_deltatime(glfw.get_time())
     TimeManager.update_sim_date()
 
-    print(np.linalg.norm(bodies_state.get_target('EARTH').velocity))
+    #print(np.linalg.norm(bodies_state.get_target('EARTH').velocity))
 
     # set window title as framerate
     glfw.set_window_title(window, str(1/delta_time))
@@ -443,43 +413,46 @@ while not glfw.window_should_close(window):
     if simming :
         launch, launch_pressed = process_input_launch(window, launch, launch_pressed)
         
-        if launch : #np.linalg.norm(bodies_state.get_target('EARTH').velocity) > 30280 and launch:
-        #if launch :
-            satellite = Hohmann('EARTH','MARS')
-            satellite.launch(bodies_state)
-            satellite.plane_delta()
+        if launch :
+            # empty buffer of old instance information if multiple launches 
+            if satellite_exists :
+                satellite.satellite.file.seek(0)
+                satellite.satellite.file.truncate(0)
+            
+            satellite = Spaceship('EARTH','MARS')
+            satellite.launch(TimeManager.unix_start + TimeManager.simulated_time, bodies_state)
             satellite.bodies_state.check_csvs()
-            launch = False
+
+            launch = False ; satellite_exists = True
 
         [body.log(TimeManager.sim_date.translate({ord(','): None})) for body in bodies_state.bodies]
  
-        if satellite.satellite != None :
+        if satellite_exists :
             
-            _ = update_bodies_fehlberg_rungekutta(satellite.bodies_state, fehlberg_timestep)
+            if satellite.mission_time >= satellite.t :
+                #satellite.second_impulse()
+                
+                [body.file.close() for body in bodies_state.bodies]
+                glfw.terminate()
+
+            satellite.satellite.log(TimeManager.sim_date.translate({ord(','): None}))
+            
+            update_bodies_fixed_fehlberg_rungekutta(satellite.bodies_state, fehlberg_timestep)
             
             satellite.mission_time += fehlberg_timestep
-            
-            if glfw.get_key(window, glfw.KEY_B) == glfw.PRESS :
-                satellite.boost()
-                
-            if glfw.get_key(window, glfw.KEY_P) == glfw.PRESS :
-                satellite.plane_change()    
-                
-            if glfw.get_key(window, glfw.KEY_O) == glfw.PRESS :
-                satellite.plane_realign()   
         
         fehlberg_timestep = update_bodies_fehlberg_rungekutta(bodies_state, fehlberg_timestep)
         
         TimeManager.simulated_time += fehlberg_timestep
     
-    # begin drawing
+    # -------------------------------------------------------- DRAWING ----------------------------------------------------- #
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     
     for body in bodies_state:
         body.draw(sphere_shader, scale, simming)
         body.draw_orbit(orbits_shader, scale)
     
-    if satellite.satellite != None :
+    if satellite_exists :
         for body in satellite.bodies_state:
             body.draw(sphere_shader, scale, simming)
             body.draw_orbit(orbits_shader, scale)
@@ -494,5 +467,5 @@ while not glfw.window_should_close(window):
 [body.file.close() for body in bodies_state.bodies]
 glfw.terminate()
 
-#stats = pstats.Stats(profiler).sort_stats("ncalls")
-#stats.print_stats()
+if satellite_exists :
+    satellite.satellite.file.close()

@@ -1,4 +1,3 @@
-from vector import Vector3
 from math_functions import project
 import glm
 import numpy as np
