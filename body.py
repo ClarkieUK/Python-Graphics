@@ -163,4 +163,4 @@ class Bodies(MutableSequence):
         for body in self.bodies :
             with open(os.path.join('simulation_results', body.ID+'.csv'), 'w', newline='') as f:
                 writer = csv.writer(f)
-                writer.writerow(['Date-time', 'px (km)', 'py (km)', 'pz (km)', 'vx (km/s)', 'vy (km/s)', 'vz (km/s)'])  # Header row
+                writer.writerow(['Date-time', 'px (m)', 'py (m)', 'pz (m)', 'vx (m/s)', 'vy (m/s)', 'vz (m/s)'])  # Header row
