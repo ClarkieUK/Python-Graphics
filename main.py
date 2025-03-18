@@ -12,7 +12,8 @@ from PIL import Image
 
 # numeracy
 import numpy as np
-from integrators import update_bodies_rungekutta , update_bodies_butchers_rungekutta, update_bodies_fehlberg_rungekutta, update_bodies_fixed_fehlberg_rungekutta 
+from integrators import update_bodies_rungekutta , update_bodies_butchers_rungekutta, update_bodies_fehlberg_rungekutta
+from integrators import update_bodies_fixed_fehlberg_rungekutta, update_bodies_dormand_prince, update_bodies_fixed_dormand_prince
 from datetime import datetime
 
 # abstractions
@@ -42,6 +43,7 @@ launch_pressed = False
 satellite_exists = False
 
 fehlberg_timestep = (3.154e+7) * 1/(16 * 144)
+prince_timestep = (3.154e+7) * 1/(160 * 144)
 
 G = 6.67430e-11
 AU = 1.496e11
@@ -359,7 +361,7 @@ skybox = Sphere(2500,15)
 
 # entities
 #bodies_state = Bodies.from_bodies([sun, mercury, venus, earth, moon, mars, jupiter, hektor, ganymede, io, callisto, saturn, uranus, neptune])
-#bodies_state = Bodies.from_bodies(np.array([sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune, apophis, phaethon, halley, cruithne, adonis]))
+#bodies_state = Bodies.from_bodies(np.array([sun, mercury, venus, earth,moon, mars, jupiter, saturn, uranus, neptune, apophis, phaethon, halley, cruithne, adonis]))
 bodies_state = Bodies.from_bodies(np.array([sun,earth,mars]))
 bodies_state.check_csvs()
 
@@ -413,7 +415,7 @@ while not glfw.window_should_close(window):
     if simming :
         launch, launch_pressed = process_input_launch(window, launch, launch_pressed)
         
-        if launch :
+        if (TimeManager.unix_start + TimeManager.simulated_time) >= datetime.strptime("2025-01-15", "%Y-%m-%d").timestamp() and launch == True :
             # empty buffer of old instance information if multiple launches 
             if satellite_exists :
                 satellite.satellite.file.seek(0)
@@ -428,22 +430,26 @@ while not glfw.window_should_close(window):
         [body.log(TimeManager.sim_date.translate({ord(','): None})) for body in bodies_state.bodies]
  
         if satellite_exists :
-            
             if satellite.mission_time >= satellite.t :
                 satellite.second_impulse()
                 
-                #[body.file.close() for body in bodies_state.bodies]
-                #glfw.terminate()
+                [body.file.close() for body in bodies_state.bodies]
+                glfw.terminate()
+                
 
             satellite.satellite.log(TimeManager.sim_date.translate({ord(','): None}))
             
             update_bodies_fixed_fehlberg_rungekutta(satellite.bodies_state, fehlberg_timestep)
+            #update_bodies_fixed_dormand_prince(satellite.bodies_state, prince_timestep)
             
             satellite.mission_time += fehlberg_timestep
+            #satellite.mission_time += prince_timestep
+        
         
         fehlberg_timestep = update_bodies_fehlberg_rungekutta(bodies_state, fehlberg_timestep)
+        #prince_timestep = update_bodies_dormand_prince(bodies_state, prince_timestep)
         
-        TimeManager.simulated_time += fehlberg_timestep
+        TimeManager.simulated_time += fehlberg_timestep #prince_timestep 
     
     # -------------------------------------------------------- DRAWING ----------------------------------------------------- #
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)

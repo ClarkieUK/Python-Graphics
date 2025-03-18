@@ -24,7 +24,7 @@ class Spaceship() :
         target_pos = target_body.position
         target_vel = target_body.velocity
         
-        v_i, self.v_f, self.t = lambert(self.launch_location,self.launch_target, t0, launch_pos, 81)
+        v_i, self.v_f, self.t = lambert(self.launch_location,self.launch_target, t0, launch_pos, 300)
 
         self.satellite = Body('SATELLITE',
                               np.array([255,255,255]),
