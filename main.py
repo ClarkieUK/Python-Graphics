@@ -12,8 +12,7 @@ from PIL import Image
 
 # numeracy
 import numpy as np
-from integrators import update_bodies_rungekutta , update_bodies_butchers_rungekutta, update_bodies_fehlberg_rungekutta
-from integrators import update_bodies_fixed_fehlberg_rungekutta, update_bodies_dormand_prince, update_bodies_fixed_dormand_prince
+from integrators import *
 from datetime import datetime
 
 # abstractions
@@ -67,8 +66,16 @@ DARK_BROWN = np.array([0.82059, 0.67157, 0.47941])
 
 # callbacks
 def process_input_camera(window, delta_time):
-
+    global step_sizes,global_errors
     if (glfw.get_key(window, glfw.KEY_ESCAPE) == glfw.PRESS): 
+        
+        # Convert lists to NumPy arrays
+        step_sizes = np.array(step_sizes)
+        global_errors = np.array(global_errors)
+
+        # Save to a compressed file
+        np.savez("integration_data.npz", step_sizes=step_sizes, global_errors=global_errors)
+        
         glfw.set_window_should_close(window, True)  
 
     # cameraSpeed = float(5.0 * delta_time)
@@ -361,7 +368,7 @@ skybox = Sphere(2500,15)
 
 # entities
 #bodies_state = Bodies.from_bodies([sun, mercury, venus, earth, moon, mars, jupiter, hektor, ganymede, io, callisto, saturn, uranus, neptune])
-#bodies_state = Bodies.from_bodies(np.array([sun, mercury, venus, earth,moon, mars, jupiter, saturn, uranus, neptune, apophis, phaethon, halley, cruithne, adonis]))
+#bodies_state = Bodies.from_bodies(np.array([sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune, apophis, phaethon, halley, cruithne, adonis]))
 bodies_state = Bodies.from_bodies(np.array([sun,earth,mars]))
 bodies_state.check_csvs()
 
@@ -415,7 +422,7 @@ while not glfw.window_should_close(window):
     if simming :
         launch, launch_pressed = process_input_launch(window, launch, launch_pressed)
         
-        if (TimeManager.unix_start + TimeManager.simulated_time) >= datetime.strptime("2025-01-15", "%Y-%m-%d").timestamp() and launch == True :
+        if (TimeManager.unix_start + TimeManager.simulated_time) >= datetime.strptime("2024-12-20", "%Y-%m-%d").timestamp() and launch == True :
             # empty buffer of old instance information if multiple launches 
             if satellite_exists :
                 satellite.satellite.file.seek(0)
@@ -427,30 +434,25 @@ while not glfw.window_should_close(window):
 
             launch = False ; satellite_exists = True
 
-        [body.log(TimeManager.sim_date.translate({ord(','): None})) for body in bodies_state.bodies]
- 
         if satellite_exists :
             if satellite.mission_time >= satellite.t :
                 satellite.second_impulse()
-                
                 [body.file.close() for body in bodies_state.bodies]
-                glfw.terminate()
+                satellite.satellite.file.close()
                 
+                glfw.terminate()
 
             satellite.satellite.log(TimeManager.sim_date.translate({ord(','): None}))
             
-            update_bodies_fixed_fehlberg_rungekutta(satellite.bodies_state, fehlberg_timestep)
-            #update_bodies_fixed_dormand_prince(satellite.bodies_state, prince_timestep)
+            update_bodies_fixed_dormand_prince(satellite.bodies_state, prince_timestep)
             
-            satellite.mission_time += fehlberg_timestep
-            #satellite.mission_time += prince_timestep
+            satellite.mission_time += prince_timestep
+            
+        [body.log(TimeManager.sim_date.translate({ord(','): None})) for body in bodies_state.bodies]
         
+        prince_timestep = update_bodies_dormand_prince(bodies_state, prince_timestep)
         
-        fehlberg_timestep = update_bodies_fehlberg_rungekutta(bodies_state, fehlberg_timestep)
-        #prince_timestep = update_bodies_dormand_prince(bodies_state, prince_timestep)
-        
-        TimeManager.simulated_time += fehlberg_timestep #prince_timestep 
-    
+        TimeManager.simulated_time += prince_timestep 
     # -------------------------------------------------------- DRAWING ----------------------------------------------------- #
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     

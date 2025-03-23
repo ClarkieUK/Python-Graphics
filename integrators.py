@@ -93,6 +93,7 @@ def update_bodies_fehlberg_rungekutta(bodies_state : object, dt : float) -> floa
         update_bodies_fehlberg_rungekutta(bodies_state, _dt)
 
     else : 
+        print('p',dt)
         bodies_state.positions += drs
         bodies_state.velocities += dvs 
         
@@ -131,21 +132,21 @@ def update_bodies_fixed_fehlberg_rungekutta(bodies_state : object, dt : float) :
     drs = 1/24*drs1 + 0*drs2 + 0*drs3 + 5/48*drs4 + 27/56*drs5 + 125/336*drs6 
     dvs = 1/24*dvs1 + 0*dvs2 + 0*dvs3 + 5/48*dvs4 + 27/56*dvs5 + 125/336*dvs6 
 
+    print('s',dt)
     bodies_state.positions += drs
     bodies_state.velocities += dvs 
     
 
+step_sizes = []
+global_errors = []
+
 def update_bodies_dormand_prince(bodies_state: object, dt: float) -> float:
-    """
-    Adaptive Dormand-Prince Runge-Kutta method (RK5(4)7M) for integrating body motion.
-    """
-    t = 0  # No explicit time dependence
+    global step_sizes, global_errors
+    t = 0 
     
-    # Compute k1
     drs1, dvs1 = newtonian_gravitation(t, bodies_state.positions, bodies_state.velocities, bodies_state.masses)
     drs1 *= dt; dvs1 *= dt
-    
-    # Compute k2 to k7 using Dormand-Prince coefficients
+
     drs2, dvs2 = newtonian_gravitation(t + (1/5) * dt, bodies_state.positions + (1/5) * drs1,
                                                      bodies_state.velocities + (1/5) * dvs1, 
                                                      bodies_state.masses)
@@ -191,21 +192,23 @@ def update_bodies_dormand_prince(bodies_state: object, dt: float) -> float:
     tolerance = 1e-8
     
     # Compute optimal time step
-    _dt = 0.9 * dt * (tolerance / error) ** (1/5)
+    _dt = 0.9 * dt * (tolerance / error) ** (1/(5+1))
     
     # Adaptive step-size control
     if error > tolerance:
         update_bodies_dormand_prince(bodies_state, _dt)
     
     else:
+        step_sizes.append(dt)
+        global_errors.append(error)
+        
         bodies_state.positions += drs5_order
         bodies_state.velocities += dvs5_order
     
     return _dt
 
-
-
 def update_bodies_fixed_dormand_prince(bodies_state: object, dt: float) -> float:
+    
     """
     Adaptive Dormand-Prince Runge-Kutta method (RK5(4)7M) for integrating body motion.
     """

@@ -30,8 +30,8 @@ def lambert(host : str, target : str, t0 : float, r0 : np.array, desired_mission
     r = info[f'{target}_LOC_LOWER']
     corrected_duration = info['LOWER_DT']
     
-    v_i,v_f = izzo(Sun.k,r0,r,corrected_duration,0,True,True,100,1e-6)
-    v_i,v_f = izzo2015(Sun.k,r0,r,corrected_duration,0,True,True,35,0.00001,1e-6)
+    v_i,v_f = izzo(Sun.k,r0,r,corrected_duration,0,True,False,150,1e-8)
+    #v_i,v_f = izzo2015(Sun.k,r0,r,corrected_duration,0,True,True,35,0.00001,1e-6)
         
     return v_i, info[f'{target}_VEL_LOWER'], corrected_duration
 
