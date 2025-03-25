@@ -32,6 +32,7 @@ class TimeManager() :
             print("Avg. FPS :", cls.frame_count)
             print("Simulated Time :", f"{cls.simulated_time/3.154e+7:.5f}" , 'yr')
             print(cls.sim_date)
+            
             print('\n')
             
             cls.anchor_time = this_frame 

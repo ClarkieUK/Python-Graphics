@@ -8,6 +8,7 @@ uniform float iTime;
 
 void main()
 {
+    
     gl_Position =  projection * view * vec4(a_position, 1.0);
 }
 

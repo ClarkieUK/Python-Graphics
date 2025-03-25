@@ -9,7 +9,6 @@ import glm
 
 class Shader :
     def __init__ (self, vertexPath : str, fragmentPath : str) :
-    # create shader 
         try : 
             with open(f'shaders/'+vertexPath) as vertexshader : 
                 vertexdata = vertexshader.read()

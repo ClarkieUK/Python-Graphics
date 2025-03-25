@@ -28,7 +28,7 @@ for target in targets:
     
     ax.plot(px, py, pz, label=target)  # Add label for better visualization
 
-# Compute overall range
+
 all_px, all_py, all_pz = np.array(all_px), np.array(all_py), np.array(all_pz)
 
 max_range = max(all_px.ptp(), all_py.ptp(), all_pz.ptp()) / 2.0
