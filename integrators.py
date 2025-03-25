@@ -189,7 +189,7 @@ def update_bodies_dormand_prince(bodies_state: object, dt: float) -> float:
     _dvse = dvs5_order - dvs4_order
     
     error = (np.linalg.norm(_drse, axis=(0, 1))**2 + np.linalg.norm(_dvse, axis=(0, 1))**2)**(1/2)
-    tolerance = 1e-8
+    tolerance = 1e-4
     
     # Compute optimal time step
     _dt = 0.9 * dt * (tolerance / error) ** (1/(5+1))

@@ -368,8 +368,10 @@ skybox = Sphere(2500,15)
 
 # entities
 #bodies_state = Bodies.from_bodies([sun, mercury, venus, earth, moon, mars, jupiter, hektor, ganymede, io, callisto, saturn, uranus, neptune])
-#bodies_state = Bodies.from_bodies(np.array([sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune, apophis, phaethon, halley, cruithne, adonis]))
-bodies_state = Bodies.from_bodies(np.array([sun,earth,mars]))
+
+bodies_state = Bodies.from_bodies(np.array([sun, mercury, venus, earth, moon, mars, jupiter, saturn, uranus, neptune, apophis, phaethon, halley, cruithne, adonis]))
+
+#bodies_state = Bodies.from_bodies(np.array([sun,earth,mars]))
 bodies_state.check_csvs()
 
 # opengl / glfw settings
