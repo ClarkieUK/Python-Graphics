@@ -1,5 +1,5 @@
 import numpy as np
-from math_functions import *
+G = 6.67430e-11
 
 def newtonian_gravitation(t: float, positions: np.array, velocities: np.array, masses: np.array) -> tuple[np.array, np.array] : # cant decide between numpy or lists...
     drs = positions[np.newaxis] - positions[:, np.newaxis]
